@@ -1,23 +1,58 @@
-import React from 'react';
-import { View, Text, Button } from 'react-native';
-//import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { format } from 'date-fns';
+import FeatherIcon from '@expo/vector-icons/Feather';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface HeaderDatePickerProps {
     selectedDate: Date;
     setSelectedDate: (date: Date) => void;
 }
 
-const HeaderDatePicker: React.FC<HeaderDatePickerProps> = ({
-    selectedDate,
-    setSelectedDate,
-}: HeaderDatePickerProps) => {
-    const [showPicker, setShowPicker] = React.useState(false);
+const HeaderDatePicker: React.FC<HeaderDatePickerProps> = ({ selectedDate, setSelectedDate }) => {
+    const [showPicker, setShowPicker] = useState(false);
+
+    const togglePicker = () => setShowPicker(prev => !prev);
+
+    const handleDateChange = (event: any, date?: Date) => {
+        setShowPicker(Platform.OS === 'ios');
+        if (date) setSelectedDate(date);
+    };
+
+    const formattedDate = format(selectedDate, 'MMM.dd');
 
     return (
-        <View className='flex-row justify-between items-center'>
-            <Text className='text-xl font-bold'>{selectedDate.toDateString()}</Text>
+        <View>
+            <TouchableOpacity style={styles.dateView} onPress={togglePicker}>
+                <FeatherIcon name="calendar" size={24} color="#000" />
+                <Text style={styles.dateText}>{formattedDate}</Text>
+            </TouchableOpacity>
+
+            {showPicker && (
+                <DateTimePicker
+                    value={selectedDate}
+                    mode="date"
+                    display="calendar"
+                    onChange={handleDateChange}
+                />
+            )}
         </View>
     );
-}
+};
 
-export default HeaderDatePicker
+export default HeaderDatePicker;
+
+const styles = StyleSheet.create({
+    dateView: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        backgroundColor: '#fff',
+    },
+    dateText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginLeft: 8,
+        color: '#000',
+    },
+});

@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import React from 'react'
 import HorizontalDatePicker from './components/HorizontalDatePicker'
 import HeaderDatePicker from './components/HeaderDatePicker';
@@ -8,8 +8,7 @@ const index = () => {
   const [selectedDate, setSelectedDate] = React.useState(new Date());
 
   return (
-    <View className='flex-1'>
-
+    <View style={styles.container}>
       <HeaderDatePicker
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
@@ -24,3 +23,10 @@ const index = () => {
 }
 
 export default index
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+});

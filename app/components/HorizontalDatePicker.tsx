@@ -1,10 +1,9 @@
-// HorizontalSwiper.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { eachWeekOfInterval, subDays, addDays, eachDayOfInterval, format, isSameDay, isToday } from 'date-fns';
+import { eachWeekOfInterval, subDays, addDays, eachDayOfInterval, format, isSameDay } from 'date-fns';
 
-
+// Generate dates for 30 days
 const dates = eachWeekOfInterval(
   {
     start: subDays(new Date(), 16),
@@ -21,37 +20,39 @@ const dates = eachWeekOfInterval(
 }, []);
 
 
-// Interface for type safe
+// type safe, 
 interface HorizontalDatePickerProps {
   selectedDate: Date;
   setSelectedDate: (date: Date) => void;
 }
 
-// Main Function
+
+// main component
 export default function HorizontalSwiper({
   selectedDate,
   setSelectedDate,
 }: HorizontalDatePickerProps) {
+  const initialPage = dates.findIndex(week =>
+    week.some(day => isSameDay(day, selectedDate))
+  );
 
   return (
     <PagerView
       style={styles.pagerView}
-      initialPage={Math.floor(dates.length / 2)}
+      initialPage={initialPage !== -1 ? initialPage : Math.floor(dates.length / 2)}
     >
       {dates.map((week, i) => (
         <View key={i} style={styles.weekContainer}>
           {week.map((day, j) => {
-
-            const isSelected = isSameDay(day, selectedDate); // compare selected, and today
+            const isSelected = isSameDay(day, selectedDate);
             const isToday = isSameDay(day, new Date());
 
             return (
               <TouchableOpacity
                 key={j}
                 style={[styles.dayContainer, isSelected && styles.selectedDate]}
-                onPress={() => setSelectedDate(day)} // set the Date on click
+                onPress={() => setSelectedDate(day)}
               >
-                {/*  Display Week day, (mon, tue, etc)*/}
                 <Text
                   style={[
                     styles.weekDayText,
@@ -60,8 +61,6 @@ export default function HorizontalSwiper({
                 >
                   {format(day, 'EE')}
                 </Text>
-
-                {/*  Display date*/}
                 <Text
                   style={[
                     styles.dateText,
@@ -79,6 +78,7 @@ export default function HorizontalSwiper({
     </PagerView>
   );
 }
+
 const styles = StyleSheet.create({
   pagerView: {
     flex: 1,
