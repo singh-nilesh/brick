@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import HorizontalDatePicker from './components/HorizontalDatePicker'
+import HeaderDatePicker from './components/HeaderDatePicker';
 import { format } from 'date-fns';
 
 const index = () => {
@@ -9,10 +10,15 @@ const index = () => {
   return (
     <View className='flex-1'>
 
-      <View>
-        <Text>Selected Date: {format(selectedDate, 'EEEE, MMMM dd, yyyy')}</Text>
-      </View>
-      <HorizontalDatePicker/>
+      <HeaderDatePicker
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
+
+      <HorizontalDatePicker
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
     </View>
   )
 }
