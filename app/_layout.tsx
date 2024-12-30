@@ -1,7 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -9,6 +9,10 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/components/useColorScheme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
+import { tokenCache } from '@/cache';
+import { useAuth } from '@clerk/clerk-react';
+import { useSegments } from 'expo-router';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -23,8 +27,12 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+
+// main Function
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+
+  // Load fonts and hide the splash screen when they're ready.
+  const [fontLoaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
@@ -35,31 +43,45 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
+    if (fontLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontLoaded]);
 
-  if (!loaded) {
+  if (!fontLoaded) {
     return null;
   }
 
   return <RootLayoutNav />;
 }
 
-function RootLayoutNav() {
+
+
+// edited section
+const RootLayoutNav = () => {
   const colorScheme = useColorScheme();
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
+
+  if (!publishableKey) {
+    throw new Error('Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env')
+  }
 
   return (
-    <GestureHandlerRootView>
-      <SafeAreaProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+      <ClerkLoaded>
+        <GestureHandlerRootView>
+          <SafeAreaProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack>
+                <Stack.Screen name='index' options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+              </Stack>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </ClerkLoaded>
+    </ClerkProvider>
   );
 }

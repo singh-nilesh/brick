@@ -3,9 +3,11 @@ import React from 'react'
 import { useOAuth } from '@clerk/clerk-expo'
 import * as WebBrowser from 'expo-web-browser'
 import Ionicons from '@expo/vector-icons/Ionicons';
-
+import { Redirect, useRouter } from 'expo-router';
 
 const LandingPage = () => {
+
+  const router = useRouter();
 
   // Google Authentication
   const { startOAuthFlow: googleOAuth } = useOAuth({ strategy: 'oauth_google' });
@@ -16,6 +18,7 @@ const LandingPage = () => {
 
       if (createdSessionId) {
         setActive!({ session: createdSessionId })
+        router.replace('/TaskScreen'); // Navigate to TaskScreen
       }
     }
     catch (err) {
@@ -30,7 +33,8 @@ const LandingPage = () => {
       const { createdSessionId, setActive } = await appleOAuth();
 
       if (createdSessionId) {
-        setActive!({ session: createdSessionId })
+        setActive!({ session: createdSessionId });
+        router.replace('/TaskScreen'); // Navigate to TaskScreen
       }
     }
     catch (err) {
@@ -63,7 +67,7 @@ const LandingPage = () => {
           <Text> Continue with Apple</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buttons} onPress={handelGoogleAuth}>
+        <TouchableOpacity style={styles.buttons} onPress={() => router.push('/(auth)/Login')}>
         <Ionicons name="mail" size={24} color="black" />
           <Text> Continue with Email</Text>
         </TouchableOpacity>
