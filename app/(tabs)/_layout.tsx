@@ -5,7 +5,6 @@ import { Pressable } from 'react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
@@ -20,14 +19,13 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint
-
       }}>
       <Tabs.Screen
         name="TaskScreen"
         options={{
-          title: 'Tab One',
+          title: 'Tasks',
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="tasks" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -44,7 +42,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      
     </Tabs>
   );
 }

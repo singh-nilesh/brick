@@ -56,6 +56,8 @@ export default function RootLayout() {
 }
 
 
+
+// edited section
 const RootLayoutNav = () => {
   const colorScheme = useColorScheme();
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
@@ -71,6 +73,7 @@ const RootLayoutNav = () => {
           <SafeAreaProvider>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
               <Stack>
+                <Stack.Screen name='index' options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="modal" options={{ presentation: 'modal' }} />

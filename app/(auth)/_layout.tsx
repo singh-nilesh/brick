@@ -8,7 +8,9 @@ export default function AuthRoutesLayout() {
     return <Redirect href={'/(tabs)/TaskScreen'} />
   }
 
-  return(
-    <Stack/>
+  return (
+    <Stack>
+      <Stack.Screen name='LandingPage' options={{headerShown:false}}/>
+    </Stack>
   )
 }

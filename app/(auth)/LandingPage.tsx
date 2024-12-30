@@ -3,9 +3,11 @@ import React from 'react'
 import { useOAuth } from '@clerk/clerk-expo'
 import * as WebBrowser from 'expo-web-browser'
 import Ionicons from '@expo/vector-icons/Ionicons';
-
+import { useRouter } from 'expo-router';
 
 const LandingPage = () => {
+
+  const router = useRouter();
 
   // Google Authentication
   const { startOAuthFlow: googleOAuth } = useOAuth({ strategy: 'oauth_google' });
@@ -16,6 +18,7 @@ const LandingPage = () => {
 
       if (createdSessionId) {
         setActive!({ session: createdSessionId })
+        router.replace('/TaskScreen'); // Navigate to TaskScreen
       }
     }
     catch (err) {
@@ -30,7 +33,8 @@ const LandingPage = () => {
       const { createdSessionId, setActive } = await appleOAuth();
 
       if (createdSessionId) {
-        setActive!({ session: createdSessionId })
+        setActive!({ session: createdSessionId });
+        router.replace('/TaskScreen'); // Navigate to TaskScreen
       }
     }
     catch (err) {
