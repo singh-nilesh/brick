@@ -23,7 +23,7 @@ export default function TabLayout() {
 
       }}>
       <Tabs.Screen
-        name="index"
+        name="TaskScreen"
         options={{
           title: 'Tab One',
           headerShown: false,
