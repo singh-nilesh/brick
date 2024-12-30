@@ -1,31 +1,118 @@
-import { StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, Pressable, TextInput } from 'react-native'
+import React, { useState } from 'react'
+import HorizontalDatePicker from '@/components/HorizontalDatePicker'
+import HeaderDatePicker from '@/components/HeaderDatePicker';
+import FooterTaskInput from '@/components/FooterTaskInput';
+import TaskListItems from '@/components/TaskListItems';
+import modalTask from '@/modal/modalTask';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+const dummyTasks: modalTask[] = [{
+    title: 'Complete project report',
+    date: new Date(),
+    completed: false,
+}, {
+    title: 'Team meeting',
+    date: new Date(),
+    completed: true,
+}, {
+    title: 'Code review',
+    date: new Date(),
+    completed: false,
+}, {
+    title: 'Client presentation',
+    date: new Date(),
+    completed: true,
+}, {
+    title: 'Update documentation',
+    date: new Date(),
+    completed: false,
+}, {
+    title: 'Fix bugs',
+    date: new Date(),
+    completed: true,
+}, {
+    title: 'Plan next sprint',
+    date: new Date(),
+    completed: false,
+}, {
+    title: 'Deploy to production',
+    date: new Date(),
+    completed: true,
+}
+];
 
-export default function TabOneScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
-  );
+
+const TaskScreen = () => {
+    const [selectedDate, setSelectedDate] = useState(new Date());
+
+    const [tasks, setTasks] = useState<modalTask[]>(dummyTasks);
+
+
+    // using a Filter, Instead of Splice, keeps the original array intact, 
+    const DeleteTask = (index: number) => {
+        setTasks((currentTask) => currentTask.filter((_, i) => i !== index));
+    };
+    
+    return (
+        <View style={styles.container}>
+            <HeaderDatePicker
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+            />
+            <HorizontalDatePicker
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+            />
+            <FlatList
+                style={styles.taskView}
+                data={tasks}
+                contentContainerStyle={{ gap: 7}}
+                keyExtractor={(item) => item.title}
+
+                renderItem={({ item, index }) => 
+                    <TaskListItems
+                        item={item}
+                        index={index}
+                        setTasks={setTasks}
+                        onDelete={() => DeleteTask(index)}
+                    />
+                }
+
+                ListFooterComponent={() =>
+                    <FooterTaskInput
+                        onAdd={(newTodo: string) => setTasks((currentTasks: modalTask[]) => [
+                            ...currentTasks,
+                            {
+                                title: newTodo,
+                                date: selectedDate,
+                                completed: false,
+                            },
+                        ])} />}
+            />
+        </View>
+    )
 }
 
+export default TaskScreen
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#white',
+    },
+    taskView: {
+        flexDirection: 'column',
+        backgroundColor: 'transparent',
+    },
+    taskContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 5,
+    },
+    taskTitle: {
+        fontFamily: 'InterSemi',
+        fontSize: 18,
+        color: 'dimgray',
+        flex: 1,
+    },
 });
