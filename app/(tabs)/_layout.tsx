@@ -1,45 +1,48 @@
 import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint
-      }}>
+    <Tabs screenOptions={{ headerShown: false }}>
+
       <Tabs.Screen
-        name="TaskScreen"
+        name="(progress)"
+        options={{
+          title: 'Progress',
+          tabBarIcon: ({ color }) => <FontAwesome5 name="chart-line" size={24} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(journal)"
+        options={{
+          title: 'Journal',
+          tabBarIcon: ({ color }) => <FontAwesome5 name="book" size={24} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(tasks)"
         options={{
           title: 'Tasks',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <TabBarIcon name="tasks" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          tabBarIcon: ({ color }) => <FontAwesome5 name="tasks" size={24} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(feeds)"
+        options={{
+          title: 'Feeds',
+          tabBarIcon: ({ color }) => <FontAwesome5 name="newspaper" size={24} color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(profile)"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <FontAwesome5 name="user-alt" size={24} color={color} />,
         }}
       />
     </Tabs>
