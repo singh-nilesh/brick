@@ -1,12 +1,25 @@
-import { Stack } from "expo-router";
+import {
+  MaterialTopTabNavigationEventMap,
+  MaterialTopTabNavigationOptions,
+  createMaterialTopTabNavigator,
+} from "@react-navigation/material-top-tabs";
+import { withLayoutContext } from "expo-router";
+import { ParamListBase, TabNavigationState } from "@react-navigation/native";
 
-export default function TasksLayout() {
+const { Navigator } = createMaterialTopTabNavigator();
+
+export const MaterialTopTabs = withLayoutContext<
+  MaterialTopTabNavigationOptions,
+  typeof Navigator,
+  TabNavigationState<ParamListBase>,
+  MaterialTopTabNavigationEventMap
+>(Navigator);
+
+export default function TabLayout() {
   return (
-    <Stack>
-      <Stack.Screen
-        name="TaskScreen"
-        options={{ title: "Tasks", headerShown: true }}
-      />
-    </Stack>
+    <MaterialTopTabs>
+      <MaterialTopTabs.Screen name="Today" options={{ title: "Today" }} />
+      <MaterialTopTabs.Screen name="TaskScreen" options={{ title: "UpComming" }} />
+    </MaterialTopTabs>
   );
 }
