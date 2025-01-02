@@ -1,15 +1,29 @@
 import { View, Text, FlatList, StyleSheet } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
+import { useSQLiteContext } from 'expo-sqlite';
+import { getTodos } from '@/utils/taskService';
 
 const Todo = () => {
     const { user } = useUser();
-    const [todo, setTodo] = useState<Task[]>([]);
+    const db = useSQLiteContext();
+    const [todos, setTodos] = useState<Task[]>([]);
 
+    // Hook to fetch todos from the database
+    useEffect(() => {
+        const fetchTodos = async () => {
+            const todo_list = await getTodos(db) as Task[];
+            console.log(todo_list);
+            setTodos(todo_list);
+        };
+        fetchTodos();
+    }, [db]);
+
+    // Function to delete a task
     const DeleteTask = (index: number) => {
-        setTodo((currentTodo) => currentTodo.filter((_, i) => i !== index));
+        setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
     };
 
     return (
@@ -17,7 +31,7 @@ const Todo = () => {
             <Text>Welcome, {user?.emailAddresses[0].emailAddress} 🎉</Text>
             <FlatList
                 style={styles.taskView}
-                data={todo}
+                data={todos}
                 contentContainerStyle={{ gap: 7 }}
                 keyExtractor={(item) => item.id.toString()}
 
@@ -25,7 +39,7 @@ const Todo = () => {
                     <TaskListItems
                         item={item}
                         index={index}
-                        setTasks={setTodo}
+                        setTasks={setTodos}
                         onDelete={() => DeleteTask(index)}
                     />
                 }

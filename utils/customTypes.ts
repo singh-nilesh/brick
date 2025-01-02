@@ -1,11 +1,11 @@
 export interface Task {
-    id: number; // Optional for new tasks
+    id: number;
     task: string;
-    done?: boolean; // Defaults to false
-    createdAt?: string; // Defaults to current timestamp
-    dueAt?: string | null; // Optional
-    completedAt?: string | null; // Optional
-    isDeleted?: boolean; // Defaults to false
-    deletedAt?: string | null; // Optional
-    isTask?: boolean; // Defaults to false
+    done?: boolean;
+    createdAt?: Date | null;
+    dueAt?: Date | null;
+    completedAt?: Date | null;
+    isDeleted?: boolean;
+    deletedAt?: Date | null;
+    isTask?: boolean;
 }
