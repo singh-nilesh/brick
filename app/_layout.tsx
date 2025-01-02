@@ -1,9 +1,9 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -11,8 +11,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
 import { tokenCache } from '@/cache';
-import { useAuth } from '@clerk/clerk-react';
-import { useSegments } from 'expo-router';
+import { SQLiteProvider } from 'expo-sqlite';
+import { ActivityIndicator, View, Text } from 'react-native';
+import { migrateDbIfNeeded } from '@/utils/Database';
+
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -69,17 +71,36 @@ const RootLayoutNav = () => {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
+
         <GestureHandlerRootView>
           <SafeAreaProvider>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="(auth)" />
-              </Stack>
+
+              <Suspense fallback={<Fallback />}>
+                <SQLiteProvider databaseName="brick.db" onInit={migrateDbIfNeeded} useSuspense>
+
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="(auth)" />
+                  </Stack>
+
+                </SQLiteProvider>
+              </Suspense>
+              
             </ThemeProvider>
           </SafeAreaProvider>
         </GestureHandlerRootView>
+
       </ClerkLoaded>
     </ClerkProvider>
   );
+}
+
+function Fallback() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator  size="large" color="#0000ff"/>
+      <Text>Loading Database...</Text>
+    </View>
+  )
 }

@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import React from 'react'
 import Feather from '@expo/vector-icons/Feather';
-import modalTask  from '../modal/modalTask';
+import modalTask  from '../utils/modal/modalTask';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
