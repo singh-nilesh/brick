@@ -4,7 +4,7 @@ import HorizontalDatePicker from '@/components/HorizontalDatePicker'
 import HeaderDatePicker from '@/components/HeaderDatePicker';
 import FooterTaskInput from '@/components/FooterTaskInput';
 import TaskListItems from '@/components/TaskListItems';
-import modalTask from '@/modal/modalTask';
+import modalTask from '@/utils/modal/modalTask';
 import { useUser } from '@clerk/clerk-expo';
 
 const dummyTasks: modalTask[] = [{
