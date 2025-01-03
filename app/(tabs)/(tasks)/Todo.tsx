@@ -4,12 +4,13 @@ import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import { useSQLiteContext } from 'expo-sqlite';
-import { getTodos } from '@/utils/taskService';
+import { getTodos, markDeleted } from '@/utils/taskService';
 
 const Todo = () => {
     const { user } = useUser();
     const db = useSQLiteContext();
     const [todos, setTodos] = useState<Task[]>([]);
+
 
     // Hook to fetch todos from the database
     useEffect(() => {
@@ -21,9 +22,11 @@ const Todo = () => {
         fetchTodos();
     }, [db]);
 
+
     // Function to delete a task
-    const DeleteTask = (index: number) => {
+    const DeleteTask = async (index: number) => {
         setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
+        await markDeleted(db,index);
     };
 
     return (
@@ -37,6 +40,7 @@ const Todo = () => {
 
                 renderItem={({ item, index }) =>
                     <TaskListItems
+                        db = {db}
                         item={item}
                         index={index}
                         setTasks={setTodos}

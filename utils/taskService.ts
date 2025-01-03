@@ -49,50 +49,6 @@ export const getTodos = async (db: SQLiteDatabase) => {
     }
 };
 
-// Delete Todo
-export const deleteTodo = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET is_deleted = 1, deleted_at = $deletedAt WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({
-            $deletedAt: formatISO(new Date()),
-            $id: id,
-        });
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-// Complete Todo
-export const completeTodo = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET done = 1, completed_at = $completedAt WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({
-            $completedAt: formatISO(new Date()),
-            $id: id,
-        });
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-// Uncomplete Todo
-export const uncompleteTodo = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET done = 0, completed_at = NULL WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({ $id: id });
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-
-
 
 // Add a Task
 export const addTask = async (db: SQLiteDatabase, task: string): Promise<void> => {
@@ -124,8 +80,10 @@ export const getTasks = async (db: SQLiteDatabase) => {
     }
 };
 
-// Delete Task
-export const deleteTask = async (db: SQLiteDatabase, id: number): Promise<void> => {
+
+
+// Delete Task or todo
+export const markDeleted = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
         `UPDATE todos SET is_deleted = 1, deleted_at = $deletedAt WHERE id = $id`
     );
@@ -139,8 +97,9 @@ export const deleteTask = async (db: SQLiteDatabase, id: number): Promise<void> 
     }
 };
 
-// Complete Task
-export const completeTask = async (db: SQLiteDatabase, id: number): Promise<void> => {
+
+// Complete Todo or Task
+export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
         `UPDATE todos SET done = 1, completed_at = $completedAt WHERE id = $id`
     );
@@ -154,8 +113,9 @@ export const completeTask = async (db: SQLiteDatabase, id: number): Promise<void
     }
 };
 
-// Uncomplete Task
-export const uncompleteTask = async (db: SQLiteDatabase, id: number): Promise<void> => {
+
+// Uncomplete Todo or Task
+export const markAsNotDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
         `UPDATE todos SET done = 0, completed_at = NULL WHERE id = $id`
     );
@@ -165,3 +125,4 @@ export const uncompleteTask = async (db: SQLiteDatabase, id: number): Promise<vo
         await statement.finalizeAsync();
     }
 };
+
