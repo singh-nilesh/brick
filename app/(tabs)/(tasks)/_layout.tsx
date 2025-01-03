@@ -20,7 +20,6 @@ export default function TabLayout() {
     <MaterialTopTabs>
       <MaterialTopTabs.Screen name="Today" options={{ title: "Today" }} />
       <MaterialTopTabs.Screen name="TaskScreen" options={{ title: "UpComming" }} />
-      <MaterialTopTabs.Screen name="Todo" options={{ title: "Todo" }} />
     </MaterialTopTabs>
   );
 }
