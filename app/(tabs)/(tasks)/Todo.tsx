@@ -4,34 +4,43 @@ import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import { useSQLiteContext } from 'expo-sqlite';
-import { getTodos, markDeleted } from '@/utils/taskService';
+import { addTodo, getTodos, markDeleted } from '@/utils/taskService';
+import FooterTaskInput from '@/components/FooterTaskInput';
 
 const Todo = () => {
     const { user } = useUser();
     const db = useSQLiteContext();
     const [todos, setTodos] = useState<Task[]>([]);
+    const [refreshDB, setRefreshDB] = useState(false);
 
 
     // Hook to fetch todos from the database
     useEffect(() => {
         const fetchTodos = async () => {
             const todo_list = await getTodos(db) as Task[];
-            console.log(todo_list);
+            //console.log(todo_list);
             setTodos(todo_list);
         };
         fetchTodos();
-    }, [db]);
+    }, [refreshDB]);
 
 
-    // Function to delete a task
+    // Function to delete a todo
     const DeleteTask = async (index: number) => {
-        setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
-        await markDeleted(db,index);
+        // setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
+        await markDeleted(db, index);
+        setRefreshDB(!refreshDB);
     };
+
+     // Function to add a new todo
+     const handleAddTodo = async (newTodo: string) => {
+        await addTodo(db, newTodo);
+        setRefreshDB(!refreshDB);
+    };
+
 
     return (
         <View>
-            <Text>Welcome, {user?.emailAddresses[0].emailAddress} 🎉</Text>
             <FlatList
                 style={styles.taskView}
                 data={todos}
@@ -40,13 +49,17 @@ const Todo = () => {
 
                 renderItem={({ item, index }) =>
                     <TaskListItems
-                        db = {db}
+                        db={db}
                         item={item}
                         index={index}
                         setTasks={setTodos}
-                        onDelete={() => DeleteTask(index)}
+                        onDelete={() => DeleteTask(item.id)}
                     />
                 }
+
+                ListFooterComponent={() =>
+                    <FooterTaskInput
+                        onAdd={(newTodo: string) => handleAddTodo(newTodo)} />}
             />
         </View>
     )

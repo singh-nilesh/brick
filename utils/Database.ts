@@ -6,7 +6,7 @@ import { format, formatISO } from "date-fns";
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
     // for debugigng only
-    console.log(FileSystem.documentDirectory);
+    //console.log(FileSystem.documentDirectory);
 
 
     const DATABASE_VERSION = 1;
