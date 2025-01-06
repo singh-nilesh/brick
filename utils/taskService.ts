@@ -49,6 +49,21 @@ export const getTodos = async (db: SQLiteDatabase) => {
     }
 };
 
+// Update Todo
+export const updateTodo = async (db: SQLiteDatabase, id: number, task: string): Promise<void> => {
+    const statement = await db.prepareAsync(
+        `UPDATE todos SET task = $task WHERE id = $id`
+    );
+    try {
+        await statement.executeAsync({
+            $task: task,
+            $id: id,
+        });
+    } finally {
+        await statement.finalizeAsync();
+    }
+};
+
 
 // Add a Task
 export const addTask = async (db: SQLiteDatabase, task: string): Promise<void> => {

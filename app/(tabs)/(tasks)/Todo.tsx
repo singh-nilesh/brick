@@ -4,7 +4,7 @@ import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import { useSQLiteContext } from 'expo-sqlite';
-import { addTodo, getTodos, markDeleted } from '@/utils/taskService';
+import { addTodo, getTodos, markDeleted, updateTodo } from '@/utils/taskService';
 import FooterTaskInput from '@/components/FooterTaskInput';
 
 const Todo = () => {
@@ -26,9 +26,15 @@ const Todo = () => {
 
 
     // Function to delete a todo
-    const DeleteTask = async (index: number) => {
+    const DeleteTask = async (id: number) => {
         // setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
-        await markDeleted(db, index);
+        await markDeleted(db, id);
+        setRefreshDB(!refreshDB);
+    };
+
+    // Function to delete a todo
+    const EditTask = async (id: number, Text: string) => {
+        await updateTodo(db, id, Text);
         setRefreshDB(!refreshDB);
     };
 
@@ -54,6 +60,7 @@ const Todo = () => {
                         index={index}
                         setTasks={setTodos}
                         onDelete={() => DeleteTask(item.id)}
+                        onEdit={(newTask:string) => EditTask(item.id, newTask)}
                     />
                 }
 

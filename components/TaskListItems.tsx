@@ -1,5 +1,5 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import React from 'react';
+import { View, Text, Pressable, StyleSheet, TextInput } from 'react-native';
+import React, { useState } from 'react';
 import Feather from '@expo/vector-icons/Feather';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -7,25 +7,25 @@ import { Task } from '@/utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { markAsDone, markAsNotDone } from '@/utils/taskService';
 
-
-
 interface TaskListItemsProps {
     db: SQLiteDatabase;
     item: Task;
     index: number;
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
     onDelete: () => void;
+    onEdit: (newTask: string) => void;
 }
 
-const TaskListItems = ({ db, item, index, setTasks, onDelete }: TaskListItemsProps) => {
+const TaskListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskListItemsProps) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedTask, setEditedTask] = useState<string>(item.task);
 
-    const onItemPressed = (index: number) => {
+    const handleIsDone = (index: number) => {
         setTasks((currentTasks) => {
             const updatedTasks = [...currentTasks];
             const isDone = !updatedTasks[index].done; // Toggle state
             updatedTasks[index].done = isDone;
 
-            // Anonymous async function call to 
             // Perform database operation
             (async () => {
                 if (isDone) {
@@ -34,41 +34,64 @@ const TaskListItems = ({ db, item, index, setTasks, onDelete }: TaskListItemsPro
                     await markAsNotDone(db, updatedTasks[index].id);
                 }
             })();
-        
+
             return updatedTasks;
         });
     };
 
+    
 
     return (
         <Swipeable
             renderRightActions={() => (
-                <Pressable style={styles.deleteIcon} onPress={onDelete}>
-                    <MaterialCommunityIcons name="delete" size={27} color="black" />
-                </Pressable>
+                <View style={{ flexDirection: 'row' }}>
+                    <Pressable style={styles.deleteIcon} onPress={onDelete}>
+                        <MaterialCommunityIcons name="delete" size={27} color="black" />
+                    </Pressable>
+                </View>
             )}
         >
-            <Pressable
-                style={styles.taskContainer}
-                onPress={() => onItemPressed(index)}
-            >
-                <Feather
-                    name={item.done ? 'check-circle' : 'circle'}
-                    size={24}
-                    color={item.done ? 'grey' : 'black'}
-                    style={{ marginRight: 10 }} // Use style for spacing
-                />
+            <View style={{ flexDirection: 'row' }}>
+                {/* Checkbox */}
+                <Pressable style={{ padding:5}} onPress={() => handleIsDone(index)}>
+                    <Feather
+                        name={item.done ? 'check-circle' : 'circle'}
+                        size={24}
+                        color={item.done ? 'grey' : 'black'}
+                        style={{ marginRight: 10 }}
+                    />
+                </Pressable>
 
-                <Text
-                    style={[
-                        styles.taskTitle,
-                        { color: item.done ? 'grey' : 'black' },
-                        { textDecorationLine: item.done ? 'line-through' : 'none' },
-                    ]}
-                >
-                    {item.task}
-                </Text>
-            </Pressable>
+                {/* Editable task title */}
+                <Pressable style={{}} onPress={() => setIsEditing(!isEditing)}>
+                    {isEditing ? (
+                        <TextInput
+                            value={editedTask}
+                            onChangeText={setEditedTask}
+                            style={[styles.taskTitle, styles.input]}
+                            autoFocus
+                            onEndEditing={() => {
+                                if (editedTask.trim().length > 0) {
+                                    onEdit(editedTask.trim());
+                                } else {
+                                    setEditedTask(item.task);
+                                }
+                                setIsEditing(false);
+                            }}
+                        />
+                    ) : (
+                        <Text
+                            style={[
+                                styles.taskTitle,
+                                { color: item.done ? 'grey' : 'black' },
+                                { textDecorationLine: item.done ? 'line-through' : 'none' },
+                            ]}
+                        >
+                            {item.task}
+                        </Text>
+                    )}
+                </Pressable>
+            </View>
         </Swipeable>
     );
 };
@@ -76,22 +99,20 @@ const TaskListItems = ({ db, item, index, setTasks, onDelete }: TaskListItemsPro
 export default TaskListItems;
 
 const styles = StyleSheet.create({
-    taskContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 5,
-    },
     taskTitle: {
         fontFamily: 'InterSemi',
-        fontSize: 18,
-        color: 'dimgray',
+        fontSize: 20,
+        color: 'black',
+        flex: 1,
+    },
+    input: {
+        borderBottomWidth: 0,
+        paddingVertical: 2,
         flex: 1,
     },
     deleteIcon: {
         backgroundColor: '#F8C4B4',
         alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        padding: 5,
+        justifyContent: 'center',
     },
 });
