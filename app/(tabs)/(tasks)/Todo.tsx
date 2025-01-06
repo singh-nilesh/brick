@@ -2,7 +2,7 @@ import { View, Text, FlatList, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
-import TaskListItems from '@/components/TaskListItems';
+import TodoListItems from '@/components/TodoListItems';
 import { useSQLiteContext } from 'expo-sqlite';
 import { addTodo, getTodos, markDeleted, updateTodo } from '@/utils/taskService';
 import FooterTaskInput from '@/components/FooterTaskInput';
@@ -54,7 +54,7 @@ const Todo = () => {
                 keyExtractor={(item) => item.id.toString()}
 
                 renderItem={({ item, index }) =>
-                    <TaskListItems
+                    <TodoListItems
                         db={db}
                         item={item}
                         index={index}

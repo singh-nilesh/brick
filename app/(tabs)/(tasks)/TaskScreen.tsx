@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import HorizontalDatePicker from '@/components/HorizontalDatePicker'
 import HeaderDatePicker from '@/components/HeaderDatePicker';
 import FooterTaskInput from '@/components/FooterTaskInput';
-import TaskListItems from '@/components/TaskListItems';
+import TaskListItems from '@/components/TodoListItems';
 import modalTask from '@/utils/modal/modalTask';
 import { useUser } from '@clerk/clerk-expo';
 

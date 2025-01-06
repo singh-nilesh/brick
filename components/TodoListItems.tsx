@@ -16,7 +16,7 @@ interface TaskListItemsProps {
     onEdit: (newTask: string) => void;
 }
 
-const TaskListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskListItemsProps) => {
+const TodoListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskListItemsProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTask, setEditedTask] = useState<string>(item.task);
 
@@ -39,7 +39,7 @@ const TaskListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskList
         });
     };
 
-    
+
 
     return (
         <Swipeable
@@ -53,7 +53,7 @@ const TaskListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskList
         >
             <View style={{ flexDirection: 'row' }}>
                 {/* Checkbox */}
-                <Pressable style={{ padding:5}} onPress={() => handleIsDone(index)}>
+                <Pressable style={{ padding: 5 }} onPress={() => handleIsDone(index)}>
                     <Feather
                         name={item.done ? 'check-circle' : 'circle'}
                         size={24}
@@ -63,23 +63,24 @@ const TaskListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskList
                 </Pressable>
 
                 {/* Editable task title */}
-                <Pressable style={{}} onPress={() => setIsEditing(!isEditing)}>
-                    {isEditing ? (
-                        <TextInput
-                            value={editedTask}
-                            onChangeText={setEditedTask}
-                            style={[styles.taskTitle, styles.input]}
-                            autoFocus
-                            onEndEditing={() => {
-                                if (editedTask.trim().length > 0) {
-                                    onEdit(editedTask.trim());
-                                } else {
-                                    setEditedTask(item.task);
-                                }
-                                setIsEditing(false);
-                            }}
-                        />
-                    ) : (
+
+                {isEditing ? (
+                    <TextInput
+                        value={editedTask}
+                        onChangeText={setEditedTask}
+                        style={[styles.taskTitle, styles.input]}
+                        autoFocus
+                        onBlur={() => {
+                            if (editedTask.trim().length > 0) {
+                                onEdit(editedTask.trim());
+                            } else {
+                                setEditedTask(item.task);
+                            }
+                            setIsEditing(false);
+                        }}
+                    />
+                ) : (
+                    <Pressable style={{}} onPress={() => setIsEditing(!isEditing)}>
                         <Text
                             style={[
                                 styles.taskTitle,
@@ -89,14 +90,14 @@ const TaskListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskList
                         >
                             {item.task}
                         </Text>
-                    )}
-                </Pressable>
+                    </Pressable>
+                )}
             </View>
         </Swipeable>
     );
 };
 
-export default TaskListItems;
+export default TodoListItems;
 
 const styles = StyleSheet.create({
     taskTitle: {
@@ -104,6 +105,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         color: 'black',
         flex: 1,
+        paddingRight: 40,
     },
     input: {
         borderBottomWidth: 0,
@@ -114,5 +116,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8C4B4',
         alignItems: 'center',
         justifyContent: 'center',
+        paddingHorizontal: 10,
     },
 });
