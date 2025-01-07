@@ -1,11 +1,12 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import * as FileSystem from 'expo-file-system';
+import { format, formatISO } from "date-fns";
 
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
     // for debugigng only
-    console.log(FileSystem.documentDirectory);
+    //console.log(FileSystem.documentDirectory);
 
 
     const DATABASE_VERSION = 1;
@@ -25,12 +26,32 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             id INTEGER PRIMARY KEY,
             task TEXT NOT NULL,
             done INTEGER NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            completed_at DATETIME,
+            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+            due_at TEXT,
+            completed_at TEXT,
             is_deleted INTEGER NOT NULL DEFAULT 0,
-            deleted_at DATETIME,
+            deleted_at TEXT,
             is_task INTEGER NOT NULL DEFAULT 0
         );`);
+
+        // Insert Queries
+        await db.runAsync(
+            'INSERT INTO todos (task, done, created_at, is_deleted, is_task) VALUES (?, ?, ?, ?, ?)',
+            'Initial table entry', // Task text
+            0,                     // done: false
+            formatISO(new Date()), // created_at: current timestamp in ISO 8601 format
+            0,                     // is_deleted: false
+            0                      // is_task: false
+        );
+
+        await db.runAsync(
+            'INSERT INTO todos (task, done, created_at, is_deleted, is_task) VALUES (?, ?, ?, ?, ?)',
+            'Add more todos ....', // Task text
+            0,                     // done: false
+            formatISO(new Date()), // created_at: current timestamp in ISO 8601 format
+            0,                     // is_deleted: false
+            0                      // is_task: false
+        );
 
         console.log('Table created');
         currentDbVersion = 1;
