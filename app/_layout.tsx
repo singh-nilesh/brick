@@ -74,7 +74,7 @@ const RootLayoutNav = () => {
 
         <GestureHandlerRootView>
           <SafeAreaProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            { /* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
 
               <Suspense fallback={<Fallback />}>
                 <SQLiteProvider databaseName="brick.db" onInit={migrateDbIfNeeded} useSuspense>
@@ -87,7 +87,7 @@ const RootLayoutNav = () => {
                 </SQLiteProvider>
               </Suspense>
               
-            </ThemeProvider>
+            {/* </ThemeProvider> */}
           </SafeAreaProvider>
         </GestureHandlerRootView>
 
