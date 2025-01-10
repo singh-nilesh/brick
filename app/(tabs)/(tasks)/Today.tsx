@@ -1,18 +1,22 @@
-  import { View, Text, SectionList, StyleSheet } from 'react-native';
+import { View, Text, SectionList, StyleSheet } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
+import TaskBottomSheet from '@/components/TaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
 import { getTodos, markDeleted } from '@/utils/taskService';
 import { useFocusEffect } from 'expo-router';
+
 
 const Today = () => {
   const { user } = useUser();
   const db = useSQLiteContext();
   const [todos, setTodos] = useState<Task[]>([]);
   const [refreshDB, setRefreshDB] = useState(false);
-
+  
+  const [showTaskBottomSheet, setShowTaskBottomSheet] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const fetchTodos = async () => {
     const todo_list = (await getTodos(db)) as Task[];
@@ -51,6 +55,18 @@ const Today = () => {
     },
   ];
 
+  // Open Task
+  const openModal = (item: Task) => {
+    setSelectedTask(item);
+    setShowTaskBottomSheet(true);
+  };
+
+  //close Task
+  const closeModal = () => {
+    setShowTaskBottomSheet(false);
+    setSelectedTask(null);
+  }
+
   return (
     <View style={styles.container}>
       <SectionList
@@ -65,6 +81,7 @@ const Today = () => {
             item={item}
             setTasks={setTodos}
             onDelete={() => DeleteTask(item.id)}
+            onTaskPress={() => openModal(item)}
           />
         )}
 
@@ -80,6 +97,10 @@ const Today = () => {
           )
         }
       />
+      <TaskBottomSheet 
+      task={selectedTask} 
+      visible={showTaskBottomSheet}
+      onClose={closeModal}/>
     </View>
   );
 };

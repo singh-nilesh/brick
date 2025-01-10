@@ -7,14 +7,16 @@ import { Task } from '@/utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { markAsDone, markAsNotDone } from '@/utils/taskService';
 
+
 interface TaskListItemsProps {
     db: SQLiteDatabase;
     item: Task;
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
     onDelete: () => void;
+    onTaskPress: () => void;
 }
 
-const TaskListItems = ({ db, item, setTasks, onDelete }: TaskListItemsProps) => {
+const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListItemsProps) => {
     //const [isEditing, setIsEditing] = useState(false);
     //const [editedTask, setEditedTask] = useState<string>(item.task);
 
@@ -62,15 +64,17 @@ const TaskListItems = ({ db, item, setTasks, onDelete }: TaskListItemsProps) => 
                     />
                 </Pressable>
 
-                <Text
-                    style={[
-                        styles.taskTitle,
-                        { color: item.done ? 'grey' : 'black' },
-                        { textDecorationLine: item.done ? 'line-through' : 'none' },
-                    ]}
-                >
-                    {item.task}
-                </Text>
+                <Pressable style={{ flex: 1 }} onPress={onTaskPress}>
+                    <Text
+                        style={[
+                            styles.taskTitle,
+                            { color: item.done ? 'grey' : 'black' },
+                            { textDecorationLine: item.done ? 'line-through' : 'none' },
+                        ]}
+                    >
+                        {item.task}
+                    </Text>
+                </Pressable>
             </View>
         </Swipeable>
     );

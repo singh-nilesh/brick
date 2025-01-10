@@ -18,7 +18,7 @@ const LandingPage = () => {
 
       if (createdSessionId) {
         setActive!({ session: createdSessionId })
-        router.replace('/TaskScreen'); // Navigate to TaskScreen
+        router.replace('/Today'); // Navigate to TaskScreen
       }
     }
     catch (err) {
@@ -34,7 +34,7 @@ const LandingPage = () => {
 
       if (createdSessionId) {
         setActive!({ session: createdSessionId });
-        router.replace('/TaskScreen'); // Navigate to TaskScreen
+        router.replace('/Today'); // Navigate to TaskScreen
       }
     }
     catch (err) {
