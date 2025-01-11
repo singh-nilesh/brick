@@ -1,11 +1,12 @@
 import { View, Text, FlatList, StyleSheet } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TodoListItems from '@/components/TodoListItems';
 import { useSQLiteContext } from 'expo-sqlite';
 import { addTodo, getTodos, markDeleted, updateTodo } from '@/utils/taskService';
 import FooterTaskInput from '@/components/FooterTaskInput';
+import { useFocusEffect } from 'expo-router';
 
 const Todo = () => {
     const { user } = useUser();
@@ -14,15 +15,23 @@ const Todo = () => {
     const [refreshDB, setRefreshDB] = useState(false);
 
 
+    const fetchTodos = async () => {
+        const todo_list = (await getTodos(db)) as Task[];
+        setTodos(todo_list);
+    };
+
     // Hook to fetch todos from the database
     useEffect(() => {
-        const fetchTodos = async () => {
-            const todo_list = await getTodos(db) as Task[];
-            //console.log(todo_list);
-            setTodos(todo_list);
-        };
         fetchTodos();
     }, [refreshDB]);
+
+    // Hook to fetch todos from the database
+    useFocusEffect(
+        useCallback(() => {
+            fetchTodos();
+        }, [db])
+    );
+
 
 
     // Function to delete a todo
@@ -32,14 +41,14 @@ const Todo = () => {
         setRefreshDB(!refreshDB);
     };
 
-    // Function to delete a todo
+    // Function to update a todo
     const EditTask = async (id: number, Text: string) => {
         await updateTodo(db, id, Text);
         setRefreshDB(!refreshDB);
     };
 
-     // Function to add a new todo
-     const handleAddTodo = async (newTodo: string) => {
+    // Function to add a new todo
+    const handleAddTodo = async (newTodo: string) => {
         await addTodo(db, newTodo);
         setRefreshDB(!refreshDB);
     };
@@ -53,14 +62,13 @@ const Todo = () => {
                 contentContainerStyle={{ gap: 7 }}
                 keyExtractor={(item) => item.id.toString()}
 
-                renderItem={({ item, index }) =>
+                renderItem={({ item }) =>
                     <TodoListItems
                         db={db}
                         item={item}
-                        index={index}
                         setTasks={setTodos}
                         onDelete={() => DeleteTask(item.id)}
-                        onEdit={(newTask:string) => EditTask(item.id, newTask)}
+                        onEdit={(newTask: string) => EditTask(item.id, newTask)}
                     />
                 }
 

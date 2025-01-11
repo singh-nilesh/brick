@@ -10,35 +10,36 @@ import { markAsDone, markAsNotDone } from '@/utils/taskService';
 interface TaskListItemsProps {
     db: SQLiteDatabase;
     item: Task;
-    index: number;
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
     onDelete: () => void;
     onEdit: (newTask: string) => void;
 }
 
-const TodoListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskListItemsProps) => {
+const TodoListItems = ({ db, item, setTasks, onDelete, onEdit }: TaskListItemsProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTask, setEditedTask] = useState<string>(item.task);
 
-    const handleIsDone = (index: number) => {
-        setTasks((currentTasks) => {
-            const updatedTasks = [...currentTasks];
-            const isDone = !updatedTasks[index].done; // Toggle state
-            updatedTasks[index].done = isDone;
-
-            // Perform database operation
-            (async () => {
-                if (isDone) {
-                    await markAsDone(db, updatedTasks[index].id);
-                } else {
-                    await markAsNotDone(db, updatedTasks[index].id);
+    const handleIsDone = (id: number) => {
+            setTasks((currentTasks) => {
+                const updatedTasks = currentTasks.map((task) =>
+                    task.id === id ? { ...task, done: !task.done } : task
+                );
+    
+                // Perform database operation
+                const taskToUpdate = updatedTasks.find((task) => task.id === id);
+                if (taskToUpdate) {
+                    (async () => {
+                        if (taskToUpdate.done) {
+                            await markAsDone(db, id);
+                        } else {
+                            await markAsNotDone(db, id);
+                        }
+                    })();
                 }
-            })();
-
-            return updatedTasks;
-        });
-    };
-
+    
+                return updatedTasks;
+            });
+        };
 
 
     return (
@@ -53,7 +54,7 @@ const TodoListItems = ({ db, item, index, setTasks, onDelete, onEdit }: TaskList
         >
             <View style={{ flexDirection: 'row' }}>
                 {/* Checkbox */}
-                <Pressable style={{ padding: 5 }} onPress={() => handleIsDone(index)}>
+                <Pressable style={{ padding: 5 }} onPress={() => handleIsDone(item.id)}>
                     <Feather
                         name={item.done ? 'check-circle' : 'circle'}
                         size={24}
