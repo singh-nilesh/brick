@@ -99,9 +99,6 @@ const Today = () => {
         visible={showTaskBottomSheet}
         onClose={closeModal} />
 
-      <AntDesign name="pluscircle" size={50} color="black" style={styles.addIcon} />
-
-
     </View>
   );
 };
@@ -136,7 +133,7 @@ const styles = StyleSheet.create({
   },
   addIcon: {
     position: 'absolute',
-    bottom: 20,
-    right: '45%',
+    bottom: 180,
+    right: 30,
   },
 });

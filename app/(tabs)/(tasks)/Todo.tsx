@@ -50,7 +50,7 @@ const Todo = () => {
 
 
     return (
-        <View>
+        <View >
             <FlatList
                 style={styles.taskView}
                 data={todos}

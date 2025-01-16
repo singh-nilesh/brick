@@ -47,22 +47,22 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         );
 
 
-        CREATE TABLE IF NOT EXISTS todos (
-           id INTEGER PRIMARY KEY,
-           group_id INTEGER NOT NULL DEFAULT 1 REFERENCES groups(id),
-           title TEXT NOT NULL,
-           description TEXT,
-           comment TEXT,
-           status INTEGER NOT NULL DEFAULT 0,
-           priority INTEGER NOT NULL DEFAULT 5 CHECK(priority BETWEEN 1 AND 5),
-           created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-           due_at TEXT,
-           completed_at TEXT,
-           is_deleted INTEGER NOT NULL DEFAULT 0,
-           deleted_at TEXT,
-           is_task INTEGER NOT NULL DEFAULT 0,
-           habit_id INTEGER REFERENCES habits(id)
-        );
+            CREATE TABLE IF NOT EXISTS todos (
+            id INTEGER PRIMARY KEY,
+            group_id INTEGER NOT NULL DEFAULT 1 REFERENCES groups(id),
+            title TEXT NOT NULL,
+            description TEXT,
+            comment TEXT,
+            status INTEGER NOT NULL DEFAULT 0,
+            priority INTEGER NOT NULL DEFAULT 5 CHECK(priority BETWEEN 1 AND 5),
+            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+            due_at TEXT,
+            completed_at TEXT,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            deleted_at TEXT,
+            is_task INTEGER NOT NULL DEFAULT 0,
+            habit_id INTEGER REFERENCES habits(id)
+            );
       
         CREATE TABLE IF NOT EXISTS reference (
            id INTEGER PRIMARY KEY,
