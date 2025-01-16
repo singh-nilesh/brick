@@ -23,14 +23,14 @@ const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListIt
     const handleIsDone = (id: number) => {
         setTasks((currentTasks) => {
             const updatedTasks = currentTasks.map((task) =>
-                task.id === id ? { ...task, done: !task.done } : task
+                task.id === id ? { ...task, status: !task.status } : task
             );
 
             // Perform database operation
             const taskToUpdate = updatedTasks.find((task) => task.id === id);
             if (taskToUpdate) {
                 (async () => {
-                    if (taskToUpdate.done) {
+                    if (taskToUpdate.status) {
                         await markAsDone(db, id);
                     } else {
                         await markAsNotDone(db, id);
@@ -57,9 +57,9 @@ const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListIt
                 {/* Checkbox */}
                 <Pressable style={{ padding: 5 }} onPress={() => handleIsDone(item.id)}>
                     <Feather
-                        name={item.done ? 'check-circle' : 'circle'}
+                        name={item.status ? 'check-circle' : 'circle'}
                         size={24}
-                        color={item.done ? 'grey' : 'black'}
+                        color={item.status ? 'grey' : 'black'}
                         style={{ marginRight: 10 }}
                     />
                 </Pressable>
@@ -68,11 +68,11 @@ const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListIt
                     <Text
                         style={[
                             styles.taskTitle,
-                            { color: item.done ? 'grey' : 'black' },
-                            { textDecorationLine: item.done ? 'line-through' : 'none' },
+                            { color: item.status ? 'grey' : 'black' },
+                            { textDecorationLine: item.status ? 'line-through' : 'none' },
                         ]}
                     >
-                        {item.task}
+                        {item.title}
                     </Text>
                 </Pressable>
             </View>

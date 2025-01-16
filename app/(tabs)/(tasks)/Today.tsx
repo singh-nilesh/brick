@@ -47,11 +47,11 @@ const Today = () => {
   const sections = [
     {
       title: 'Assigned Tasks',
-      data: todos.filter((task) => !task.done), // Tasks that are not completed
+      data: todos.filter((task) => !task.status), // Tasks that are not completed
     },
     {
       title: 'Completed Tasks',
-      data: todos.filter((task) => task.done), // Tasks that are completed
+      data: todos.filter((task) => task.status), // Tasks that are completed
     },
   ];
 
