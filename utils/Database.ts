@@ -37,13 +37,13 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE TABLE IF NOT EXISTS habits (
             id INTEGER PRIMARY KEY,
             title TEXT NOT NULL,
-            group_id INTEGER NOT NULL DEFAULT 2 REFERENCES groups(id),
+            group_id INTEGER NOT NULL DEFAULT 3 REFERENCES groups(id),
             created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
             interval INTEGER NOT NULL DEFAULT 1,
             by_week_day TEXT NOT NULL DEFAULT '[]',
             by_month Integer DEFAULT 1,
             dt_start TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-            dt_end TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'tomorrow'))
+            dt_end TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT23:59:59Z', 'now'))
         );
 
 
@@ -67,7 +67,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE TABLE IF NOT EXISTS reference (
            id INTEGER PRIMARY KEY,
            task_id INTEGER NOT NULL REFERENCES todos(id),
-           name TEXT NOT NULL,
+           name TEXT NOT NULL,      
            url TEXT NOT NULL,
            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
         );
@@ -75,15 +75,25 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE INDEX IF NOT EXISTS idx_todos_due_at ON todos(due_at);
         CREATE INDEX IF NOT EXISTS idx_todos_habit_id ON todos(habit_id);
         CREATE INDEX IF NOT EXISTS idx_todos_group_id ON todos(group_id);
+        CREATE INDEX IF NOT EXISTS idx_todos_is_task ON todos(is_task); 
+        
 
        `);
 
 
         // Insert Queries
         // groups
-        await db.runAsync(
+        await db.runAsync(  // Todo group
             'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'Todo',                     // title
+            'Todos',                     // title
+            'Default group for todos',  // description
+            '#FFFFFF',                  // group_bgColor
+            '#000000'                   // group_textColor
+        );
+
+        await db.runAsync( // Tasks group
+            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
+            'Tasks',                     // title
             'Default group for todos',  // description
             '#FFFFFF',                  // group_bgColor
             '#000000'                   // group_textColor
@@ -136,10 +146,11 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         // first habit-task in todos
         if (habitId != null) {
             await db.runAsync(
-                'INSERT INTO todos (group_id, title, due_at, habit_id) VALUES (?, ?, ?, ?)',
+                'INSERT INTO todos (group_id, title, due_at, is_task, habit_id) VALUES (?, ?, ?, ?, ?)',
                 habit_groupId, //groups habits
                 'Daily habits', // title
                 formatISO(new Date()), // due_at: current timestamp
+                1, // task
                 habitId // Foreign key linking to the habits table
             );
             console.log('Habit-task inserted');

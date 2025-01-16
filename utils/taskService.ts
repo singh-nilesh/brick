@@ -1,16 +1,17 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTask, mapTaskToDB } from "./dbUtils";
-import { formatISO } from 'date-fns';
+import { endOfDay, formatISO, startOfDay } from 'date-fns';
+import { Task } from "./customTypes";
 
 
 // Add a Todo
-export const addTodo = async (db: SQLiteDatabase, task: string): Promise<void> => {
+export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<void> => {
     const statement = await db.prepareAsync(
         `INSERT INTO todos (title)
         VALUES ($title)`
     );
     try {
-        await statement.executeAsync({ $title: task });
+        await statement.executeAsync({ $title: new_title });
     } finally {
         await statement.finalizeAsync();
     }
@@ -29,13 +30,13 @@ export const getTodos = async (db: SQLiteDatabase) => {
 };
 
 // Update Todo
-export const updateTodo = async (db: SQLiteDatabase, id: number, task: string): Promise<void> => {
+export const updateTodo = async (db: SQLiteDatabase, id: number, new_title: string): Promise<void> => {
     const statement = await db.prepareAsync(
         `UPDATE todos SET task = $task WHERE id = $id`
     );
     try {
         await statement.executeAsync({
-            $task: task,
+            $task: new_title,
             $id: id,
         });
     } finally {
@@ -44,35 +45,54 @@ export const updateTodo = async (db: SQLiteDatabase, id: number, task: string): 
 };
 
 
+
+
 // Add a Task
-export const addTask = async (db: SQLiteDatabase, task: string): Promise<void> => {
+export const addTask = async (db: SQLiteDatabase, newTask: Task): Promise<void> => {
     const statement = await db.prepareAsync(
-        `INSERT INTO todos (task, done, created_at, is_deleted, is_task)
-        VALUES ($task, $done, $createdAt, $isDeleted, $isTask)`
+        `INSERT INTO todos (group_id, title, description, comment, status, priority, due_at, is_task, habit_id)
+        VALUES ($group_id, $title, $description, $comment, $status, $priority, $due_at, $is_task, $habit_id)`
     );
+
     try {
+        let varTask = mapTaskToDB(newTask);
         await statement.executeAsync({
-            $task: task,
-            $done: 0, // false
-            $createdAt: formatISO(new Date()),
-            $isDeleted: 0, // false
-            $isTask: 1, // true (indicates a task)
+            $group_id: varTask.group_id,
+            $title: varTask.title,
+            $description: varTask.description,
+            $comment: varTask.comment,
+            $status: varTask.status,
+            $priority: varTask.priority,
+            $due_at: varTask.due_at,
+            $is_task: 1,
+            $habit_id: varTask.habit_id
         });
     } finally {
         await statement.finalizeAsync();
     }
 };
 
+
 // Get Tasks
-export const getTasks = async (db: SQLiteDatabase) => {
-    const statement = await db.prepareAsync(`SELECT * FROM todos WHERE is_deleted = 0 AND is_task = 1`);
+export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
+    // Convert dueDate to ISO format for querying
+    const date = dueDate.toISOString().split('T')[0]; // Extract "YYYY-MM-DD"
+
+    const statement = await db.prepareAsync(
+        `SELECT * FROM todos 
+         WHERE is_deleted = 0 
+           AND is_task = 1 
+           AND strftime('%Y-%m-%d', due_at) = $date`
+    );
+
     try {
-        const result = await statement.executeAsync();
+        const result = await statement.executeAsync({ $date: date });
         return await result.getAllAsync();
     } finally {
         await statement.finalizeAsync();
     }
 };
+
 
 
 
@@ -108,7 +128,7 @@ export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> 
 };
 
 
-// Uncomplete Todo or Task
+// Uncompleted Todo or Task
 export const markAsNotDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
         `UPDATE todos SET status = 0, completed_at = NULL WHERE id = $id`

@@ -5,8 +5,9 @@ import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import TaskBottomSheet from '@/components/TaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
-import { getTodos, markDeleted } from '@/utils/taskService';
+import { getTasksForDate, markDeleted } from '@/utils/taskService';
 import { useFocusEffect } from 'expo-router';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 
 const Today = () => {
@@ -14,25 +15,21 @@ const Today = () => {
   const db = useSQLiteContext();
   const [todos, setTodos] = useState<Task[]>([]);
   const [refreshDB, setRefreshDB] = useState(false);
-  
+
   const [showTaskBottomSheet, setShowTaskBottomSheet] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const fetchTodos = async () => {
-    const todo_list = (await getTodos(db)) as Task[];
+    const todo_list = (await getTasksForDate(db, new Date())) as Task[];
     setTodos(todo_list);
   };
 
-  // Hook to fetch todos from the database
-  useEffect(() => {
-    fetchTodos();
-  }, [refreshDB]);
 
   // Hook to fetch todos from the database
   useFocusEffect(
     useCallback(() => {
       fetchTodos();
-    }, [db])
+    }, [db, refreshDB])
   );
 
 
@@ -97,10 +94,14 @@ const Today = () => {
           )
         }
       />
-      <TaskBottomSheet 
-      task={selectedTask} 
-      visible={showTaskBottomSheet}
-      onClose={closeModal}/>
+      <TaskBottomSheet
+        task={selectedTask}
+        visible={showTaskBottomSheet}
+        onClose={closeModal} />
+
+      <AntDesign name="pluscircle" size={50} color="black" style={styles.addIcon} />
+
+
     </View>
   );
 };
@@ -132,5 +133,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'dimgray',
     flex: 1,
+  },
+  addIcon: {
+    position: 'absolute',
+    bottom: 20,
+    right: '45%',
   },
 });
