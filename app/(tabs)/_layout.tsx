@@ -1,8 +1,14 @@
 import React from 'react';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Tabs } from 'expo-router';
+import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
+import * as SQLite from 'expo-sqlite';
+
+const db = SQLite.openDatabaseSync('brick.db');
 
 export default function TabLayout() {
+  useDrizzleStudio(db);
+  
   return (
     <Tabs screenOptions={{ headerShown: false }}>
 
