@@ -1,6 +1,6 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTask, mapTaskToDB } from "./dbUtils";
-import { endOfDay, formatISO, startOfDay } from 'date-fns';
+import { format, formatISO } from 'date-fns';
 import { Task } from "./customTypes";
 
 
@@ -19,7 +19,7 @@ export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<vo
 
 // Get Todos
 export const getTodos = async (db: SQLiteDatabase) => {
-    const statement = await db.prepareAsync(`SELECT * FROM todos WHERE is_deleted = 0 AND group_id = 1`);
+    const statement = await db.prepareAsync(`SELECT * FROM todos WHERE is_deleted = 0 AND is_task = 0`);
     try {
         const result = await statement.executeAsync();
         const rows = await result.getAllAsync();
@@ -76,7 +76,9 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task): Promise<void> 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
     // Convert dueDate to ISO format for querying
-    const date = dueDate.toISOString().split('T')[0]; // Extract "YYYY-MM-DD"
+    
+    const date = format(dueDate, 'yyyy-MM-dd');
+    console.log('db --> date: ', date);
 
     const statement = await db.prepareAsync(
         `SELECT * FROM todos 

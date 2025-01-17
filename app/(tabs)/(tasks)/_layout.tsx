@@ -6,14 +6,16 @@ import { format } from "date-fns"; // Import date-fns for formatting today's dat
 
 const categories = [
   { name: "Today", route: "/(tabs)/(tasks)/Today" },
-  { name: "Todo", route: "/(tabs)/(tasks)/Todo" },
-  { name: "Upcoming", route: "/(tabs)/(tasks)/TaskScreen" }, // Add more categories if needed
+  { name: "Upcoming", route: "/(tabs)/(tasks)/Upcoming" },
+  { name: "Todo", route: "/(tabs)/(tasks)/Todo" }, // Add more categories if needed
 ];
 
 const TasksLayout = () => {
+
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("Today");
-  const todayDate = format(new Date(), "MMMM dd, yyyy"); // Format today's date
+  const todayDate = format(new Date(), "MMM, dd ");
+  const todayDay = format(new Date(), "EEEE");
 
 
   
@@ -31,7 +33,9 @@ const TasksLayout = () => {
     <SafeAreaView style={{ flex: 1 }}>
       {showHeader && (
         <View style={styles.header}>
-          <Text style={styles.dateText}>{todayDate}</Text>
+          <Text style={styles.dateText}>{todayDate} 
+            <Text style={{ color:'grey', fontSize:20}}>  {todayDay}</Text>
+          </Text>
           <Feather name="settings" size={24} color="black" />
         </View>
       )}

@@ -1,10 +1,19 @@
 import React, { useState } from "react";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Octicons from '@expo/vector-icons/Octicons';
+import Foundation from '@expo/vector-icons/Foundation';
 import { Tabs } from "expo-router";
 import { View, TouchableOpacity, StyleSheet, Text, KeyboardAvoidingView, TouchableWithoutFeedback } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
+import * as SQLite from 'expo-sqlite';
+
 
 export default function TabLayout() {
+
+  const db = SQLite.openDatabaseSync('brick.db');
+  useDrizzleStudio(db);
 
   const [menuVisible, setMenuVisible] = useState(false);
 
@@ -17,112 +26,106 @@ export default function TabLayout() {
     setMenuVisible(false); // Close the menu after selection
   };
 
-  const dismissMenu = () => {
-    if (menuVisible) setMenuVisible(false);
-  };
-
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-      <TouchableWithoutFeedback onPress={dismissMenu}>
-        <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
 
-          <Tabs
-            screenOptions={{
-              headerShown: false,
-              tabBarStyle: styles.tabBarStyle,
-              tabBarShowLabel: false,
-              tabBarActiveTintColor: "black",
-              tabBarInactiveTintColor: "#333",
-            }}
+      <StatusBar backgroundColor="white" style="dark" />
+
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: styles.tabBarStyle,
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: "black",
+          tabBarInactiveTintColor: "#333",
+        }}
+      >
+        <Tabs.Screen
+          name="(progress)"
+          options={{
+            title: "Progress",
+            tabBarIcon: ({ focused }) => (
+              <View
+                style={[
+                  styles.tabIconWrapper,
+                  focused && styles.activeTabIconWrapper,
+                ]}
+              >
+                <Foundation name="mountains" size={27} color={focused ? "black" : "grey"} />
+              </View>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="(tasks)"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ focused }) => (
+              <View
+                style={[
+                  styles.tabIconWrapper,
+                  focused && styles.activeTabIconWrapper,
+                ]}
+              >
+                <Foundation name="home" size={27} color={focused ? "black" : 'grey'} />
+              </View>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="(feeds)"
+          options={{
+            title: "Feeds",
+            tabBarIcon: ({ focused }) => (
+              <View
+                style={[
+                  styles.tabIconWrapper,
+                  focused && styles.activeTabIconWrapper,
+                ]}
+              >
+                <Foundation name="results" size={27} color={focused ? "black" : 'grey'} />
+              </View>
+            ),
+          }}
+        />
+      </Tabs>
+
+
+      {/* Floating Menu */}
+      {menuVisible && (
+        <View style={styles.floatingMenu}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => handleMenuOption("Add Task")}
           >
-            <Tabs.Screen
-              name="(progress)"
-              options={{
-                title: "Progress",
-                tabBarIcon: ({ focused }) => (
-                  <View
-                    style={[
-                      styles.tabIconWrapper,
-                      focused && styles.activeTabIconWrapper,
-                    ]}
-                  >
-                    <FontAwesome5 name="chart-line" size={27} color={focused ? "black" : "grey"} />
-                  </View>
-                ),
-              }}
-            />
-
-            <Tabs.Screen
-              name="(tasks)"
-              options={{
-                title: "Home",
-                tabBarIcon: ({ focused }) => (
-                  <View
-                    style={[
-                      styles.tabIconWrapper,
-                      focused && styles.activeTabIconWrapper,
-                    ]}
-                  >
-                    <FontAwesome5 name="home" size={27} color={focused ? "black" : 'grey'} />
-                  </View>
-                ),
-              }}
-            />
-
-            <Tabs.Screen
-              name="(feeds)"
-              options={{
-                title: "Feeds",
-                tabBarIcon: ({ focused }) => (
-                  <View
-                    style={[
-                      styles.tabIconWrapper,
-                      focused && styles.activeTabIconWrapper,
-                    ]}
-                  >
-                    <FontAwesome5 name="newspaper" size={28} color={focused ? "black" : 'grey     '} />
-                  </View>
-                ),
-              }}
-            />
-          </Tabs>
-
-
-          {/* Floating Menu */}
-          {menuVisible && (
-            <View style={styles.floatingMenu}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => handleMenuOption("Add Task")}
-              >
-                <Text style={styles.menuText}>Add Task</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => handleMenuOption("Add Todo")}
-              >
-                <Text style={styles.menuText}>Add Todo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => handleMenuOption("Add Habit")}
-              >
-                <Text style={styles.menuText}>Add Habit</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-
-          {/* Connecting Line */}
-          <View style={styles.connectorLine} />
-
-          {/* Floating "+" Button */}
-          <TouchableOpacity style={styles.floatingButton} onPress={toggleMenu}>
-            <AntDesign name="pluscircle" size={45} color="black" />
+            <Text style={styles.menuText}>Add Task</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => handleMenuOption("Add Todo")}
+          >
+            <Text style={styles.menuText}>Add Todo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => handleMenuOption("Add Habit")}
+          >
+            <Text style={styles.menuText}>Add Habit</Text>
           </TouchableOpacity>
         </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      )}
+
+
+      {/* Connecting Line */}
+      <View style={styles.connectorLine} />
+
+      {/* Floating "+" Button */}
+      <TouchableOpacity style={styles.floatingButton} onPress={toggleMenu}>
+        <AntDesign name="pluscircle" size={45} color="black" />
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
     start: 20,
     height: 55,
     width: "55%",
-    backgroundColor: "#DADADA",
+    backgroundColor: "#f0f0f0",
     borderRadius: 40,
     borderEndEndRadius: 50,
     borderEndStartRadius: 50,
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
   floatingButton: {
     width: 60,
     height: 55,
-    backgroundColor: "#DADADA",
+    backgroundColor: "#f0f0f0",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 40,
@@ -162,7 +165,7 @@ const styles = StyleSheet.create({
     start: "59%",
     bottom: 37,
     height: 20,
-    backgroundColor: "#DDD", // Line color
+    backgroundColor: "#f0f0f0", // Line color
   },
 
   tabIconWrapper: {

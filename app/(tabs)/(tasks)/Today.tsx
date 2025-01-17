@@ -1,17 +1,14 @@
 import { View, Text, SectionList, StyleSheet } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@clerk/clerk-expo';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import TaskBottomSheet from '@/components/TaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
 import { getTasksForDate, markDeleted } from '@/utils/taskService';
 import { useFocusEffect } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
 
 
 const Today = () => {
-  const { user } = useUser();
   const db = useSQLiteContext();
   const [todos, setTodos] = useState<Task[]>([]);
   const [refreshDB, setRefreshDB] = useState(false);
@@ -52,13 +49,13 @@ const Today = () => {
     },
   ];
 
-  // Open Task
+  // Open Task details
   const openModal = (item: Task) => {
     setSelectedTask(item);
     setShowTaskBottomSheet(true);
   };
 
-  //close Task
+  //close Task details
   const closeModal = () => {
     setShowTaskBottomSheet(false);
     setSelectedTask(null);
