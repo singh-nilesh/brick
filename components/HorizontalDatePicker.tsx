@@ -39,7 +39,7 @@ export default function HorizontalSwiper({
   );
 
   return (
-    <View style={{ height: 45, marginBottom: 20 }}>
+    <View style={{ height: 60, backgroundColor: 'white', paddingBottom: 5, }}>
       <PagerView
       style={styles.pagerView}
         initialPage={initialPage !== -1 ? initialPage : Math.floor(dates.length / 2)}
@@ -92,6 +92,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     height: 45,
     alignItems: 'center',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
   },
   dayContainer: {
     alignItems: 'center',
@@ -113,11 +116,11 @@ const styles = StyleSheet.create({
     color: '#1e90ff',
   },
   todayText: {
-    color: '#32cd32',
+    color: 'darkblue',
   },
   selectedDate: {
-    backgroundColor: '#e0f7ff',
-    borderColor: '#1e90ff',
+    backgroundColor: '#f0f0f0',
+    borderColor: 'black',
     paddingHorizontal: 5,
     borderWidth: 2,
     color: '#1e90ff',

@@ -21,15 +21,10 @@ const Todo = () => {
     };
 
     // Hook to fetch todos from the database
-    useEffect(() => {
-        fetchTodos();
-    }, [refreshDB]);
-
-    // Hook to fetch todos from the database
     useFocusEffect(
         useCallback(() => {
             fetchTodos();
-        }, [db])
+        }, [db, refreshDB])
     );
 
 
@@ -55,7 +50,7 @@ const Todo = () => {
 
 
     return (
-        <View>
+        <View >
             <FlatList
                 style={styles.taskView}
                 data={todos}

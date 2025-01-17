@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Task } from '@/utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
-import { Header } from 'react-native/Libraries/NewAppScreen';
 
 
 const links = [
@@ -42,12 +41,12 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
 
                 <View style={styles.container}>
                     {/* Title */}
-                    <Text style={styles.Header}>{task.task}</Text>
+                    <Text style={styles.Header}>{task.title}</Text>
 
                     {/* Status */}
                     <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
                         <Text style={styles.tag}>Status:</Text>
-                        <Text style={[styles.tag, styles.standardTag]}>{task.done ? 'Completed' : "Pending"} </Text>
+                        <Text style={[styles.tag, styles.standardTag]}>{task.status ? 'Completed' : "Pending"} </Text>
                     </View>
 
 
@@ -61,7 +60,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                     <Text style={styles.subHeader}>Description:</Text>
 
                     {/* Description Content */}
-                    <Text style={styles.description}> some description provided by user, culd be any thing, Haven't added the column in database yet.</Text>
+                    <Text style={styles.description}> some description provided by user, could be any thing, Haven't added the column in database yet.</Text>
 
                     {/* Comment Section */}
                     <Text style={styles.subHeader}>Comment:</Text>

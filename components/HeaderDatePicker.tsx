@@ -21,7 +21,7 @@ const HeaderDatePicker = ({ selectedDate, setSelectedDate }:HeaderDatePickerProp
         if (date) setSelectedDate(date);
     };
 
-    const formattedDate = format(selectedDate, 'MMM.dd');
+    const formattedDate = format(selectedDate, 'MMMM dd, yyyy');
 
     return (
         <View>
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     dateText: {
-        fontSize: 18,
+        fontSize: 23,
         fontWeight: 'bold',
         marginLeft: 8,
         color: '#000',
