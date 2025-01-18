@@ -1,5 +1,5 @@
 import { formatISO, parseISO } from 'date-fns';
-import { Task } from './customTypes';
+import { Task, Todo } from './customTypes';
 
 // Define the date format utility
 function formatDateForDB(date: Date | null): string | null {
@@ -11,40 +11,49 @@ function parseDateFromDB(date: string | null): Date | null {
 }
 
 // Define a function to map a database row to the Task object
-export function mapDBToTask(row: any): Task {
+export function mapDBToTodo(row: any): Todo {
     return {
         id: row.id,
-        group_id: row.group_id,
         title: row.title,
-        description: row.description,
-        comment: row.comment,
         status: !!row.status,
-        priority: row.priority,
         createdAt: parseDateFromDB(row.created_at),
-        dueAt: parseDateFromDB(row.due_at),
         completedAt: parseDateFromDB(row.completed_at),
         isDeleted: !!row.is_deleted,
-        deletedAt: parseDateFromDB(row.deleted_at),
-        isTask: !!row.is_task,
-        habit_id: row.habit_id,
+        deletedAt: parseDateFromDB(row.deleted_at)
     };
 }
 
-// Define a function to map the Task object to a database row
-export function mapTaskToDB(task: Task): any {
+
+
+// Function to map a database row to the Task object
+export const mapDBToTask = (dbRow: any): Task => {
     return {
-        group_id: task.group_id,
-        title: task.title,
-        description: task.description,
-        comment: task.comment,
-        status: task.status ? 1 : 0,
-        priority: task.priority,
-        created_at: formatDateForDB(task.createdAt || null),
-        due_at: formatDateForDB(task.dueAt || null),
-        completed_at: formatDateForDB(task.completedAt || null),
-        is_deleted: task.isDeleted ? 1 : 0,
-        deleted_at: formatDateForDB(task.deletedAt || null),
-        is_task: task.isTask ? 1 : 0,
-        habit_id: task.habit_id,
+        id: dbRow.id,
+        title: dbRow.title,
+        description: dbRow.description || null,
+        comment: dbRow.comment || null,
+        status: !!dbRow.status,
+        priority: dbRow.priority,
+        createdAt: dbRow.created_at ? new Date(dbRow.created_at) : null,
+        dueAt: dbRow.due_at ? new Date(dbRow.due_at) : null,
+        completedAt: dbRow.completed_at ? new Date(dbRow.completed_at) : null,
+        isDeleted: dbRow.is_deleted === 1, // Convert integer to boolean
+        deletedAt: dbRow.deleted_at ? new Date(dbRow.deleted_at) : null,
+        group: dbRow.group
+            ? {
+                  id: dbRow.group_id,
+                  title: dbRow.group.group_title,
+                  bgColor: dbRow.group.group_bg_color,
+                  textColor: dbRow.group.group_text_color,
+              }
+            : null,
+        habit: dbRow.habit
+            ? {
+                  id: dbRow.habit_id,
+                  title: dbRow.habit.habit_title,
+              }
+            : null,
+        references: dbRow.references ? dbRow.references : [],
     };
-}
+};
+

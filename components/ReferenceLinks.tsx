@@ -4,7 +4,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Progress from 'react-native-progress';
 
 interface ReferenceLinksProps {
-    links: { label: string; url: string }[];
+    links: { name: string; url: string }[];
 }
 
 const ReferenceLinks = ({ links }: ReferenceLinksProps) => {
@@ -41,7 +41,7 @@ const ReferenceLinks = ({ links }: ReferenceLinksProps) => {
                         style={styles.linkContainer}
                         onPress={() => Linking.openURL(link.url)}
                     >
-                        <Text style={styles.linkText}>{index + 1}. {link.label}</Text>
+                        <Text style={styles.linkText}>{index + 1}. {link.name}</Text>
                     </TouchableOpacity>
                 ))}
             </View>

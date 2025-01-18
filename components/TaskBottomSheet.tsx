@@ -4,14 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Task } from '@/utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
-
-
-const links = [
-    { label: 'Google', url: 'https://www.google.com' },
-    { label: 'GitHub', url: 'https://github.com' },
-    { label: 'React Native Docs', url: 'https://reactnative.dev/' },
-];
-
+import { format } from 'date-fns';
 
 interface TaskBottomSheetProps {
     task: Task | null;
@@ -26,17 +19,13 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
         return (
             <ScrollView style={{ margin: 20 }}>
 
-                <MaterialCommunityIcons
-                    name="close"
-                    size={40}
-                    color="white"
-                    style={styles.close}
+                <MaterialCommunityIcons name="close" size={40} color="white" style={styles.close}
                     onPress={() => onClose()}
                 />
 
-                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
-                    <Text style={[styles.tag, styles.websiteTag]}>Todo</Text>
-                    <Text style={[styles.tag, styles.designTag]}>Brick</Text>
+                <View style={{ flexDirection: 'row', gap: 10, height: 30, margin:5 }}>
+                    {task.group? <Text style={[styles.tag, styles.websiteTag]}>{task.group.title}</Text> : <></>}
+                    {task.habit? <Text style={[styles.tag, styles.designTag]}>{task.habit.title}</Text> : <></>}
                 </View>
 
                 <View style={styles.container}>
@@ -53,14 +42,14 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                     {/* Due Date */}
                     <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
                         <Text style={styles.tag}>Due date:</Text>
-                        <Text style={[styles.tag, styles.standardTag]}>{task.dueAt ? task.dueAt.toDateString() : 'No due date'} </Text>
+                        <Text style={[styles.tag, styles.standardTag]}>{task.dueAt ? format(task.dueAt, 'dd MMM') : 'No due date'} </Text>
                     </View>
 
                     {/* Description Label */}
                     <Text style={styles.subHeader}>Description:</Text>
 
                     {/* Description Content */}
-                    <Text style={styles.description}> some description provided by user, could be any thing, Haven't added the column in database yet.</Text>
+                    <Text style={styles.description}>{task.description ? task.description: ' Add a description'}</Text>
 
                     {/* Comment Section */}
                     <Text style={styles.subHeader}>Comment:</Text>
@@ -71,7 +60,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                     />
 
                     {/* Reference Links */}
-                    <ReferenceLinks links={links} />
+                    <ReferenceLinks links={task.references} />
                 </View>
 
             </ScrollView>
@@ -166,7 +155,7 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 14,
-        color: '#333',
+        color: 'grey',
         marginBottom: 12,
     },
     commentInput: {
