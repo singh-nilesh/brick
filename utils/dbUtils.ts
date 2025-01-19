@@ -43,8 +43,8 @@ export const mapDBToTask = (dbRow: any): Task => {
             ? {
                   id: dbRow.group_id,
                   title: dbRow.group.group_title,
-                  bgColor: dbRow.group.group_bg_color,
-                  textColor: dbRow.group.group_text_color,
+                  bgColor: dbRow.group.group_bgColor,
+                  textColor: dbRow.group.group_textColor,
               }
             : null,
         habit: dbRow.habit

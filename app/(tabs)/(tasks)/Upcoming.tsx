@@ -7,7 +7,8 @@ import { useFocusEffect } from 'expo-router';
 import TaskListItems from '@/components/TaskListItems';
 import { Task } from '@/utils/customTypes';
 import TaskBottomSheet from '@/components/TaskBottomSheet';
-import { getTasksForDate, markDeleted } from '@/utils/taskService';
+import { getTasksForDate } from '@/utils/taskService';
+import { markDeleted } from '@/utils/todoService';
 
 
 const Upcoming = () => {
@@ -51,6 +52,12 @@ const Upcoming = () => {
         setSelectedTask(null);
     }
 
+    // Update Task
+    const handelUpdateTask = async () => {
+        closeModal();
+        setRefreshDB(!refreshDB);
+    }
+
 
     return (
         <View style={styles.container}>
@@ -84,7 +91,9 @@ const Upcoming = () => {
             <TaskBottomSheet
                 task={selectedTask}
                 visible={showTaskBottomSheet}
-                onClose={closeModal} />
+                onClose={closeModal}
+                onSave={() => handelUpdateTask()}
+                />
         </View>
     )
 }

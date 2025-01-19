@@ -29,11 +29,6 @@ const ReferenceLinks = ({ links }: ReferenceLinksProps) => {
 
     return (
         <View style={styles.container}>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Text style={styles.title}>Reference Links: </Text>
-                <MaterialIcons name="add-link" size={25} color="grey" style={{ paddingTop: 14 }} />
-            </View>
-
             <View>
                 {links.map((link, index) => (
                     <TouchableOpacity
@@ -68,7 +63,8 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     linkContainer: {
-        paddingVertical: 7,
+        paddingVertical: 0,
+        paddingBottom: 10,
         marginHorizontal: 15,
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
