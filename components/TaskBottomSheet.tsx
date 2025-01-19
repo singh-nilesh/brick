@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    KeyboardAvoidingView,
-    Platform,
-} from 'react-native';
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { Task } from '@/utils/customTypes';
@@ -17,6 +8,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
+
+
+//import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import * as Progress from 'react-native-progress';
+
 
 interface TaskBottomSheetProps {
     task: Task | null;
@@ -32,7 +28,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
     const [editedTask, setEditedTask] = useState({ ...task });
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showAddLinkModal, setShowAddLinkModal] = useState(false);
-    const [newLink, setNewLink] = useState({ name: '', url: '' });
+    const [newLink, setNewLink] = useState({ id: null, name: '', url: '' });
 
     const handleSave = () => {
         onSave(editedTask);
@@ -42,20 +38,36 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
     const handleDateChange = (event: any, selectedDate: Date | undefined) => {
         setShowDatePicker(false);
         if (selectedDate) {
-            setEditedTask((prev) => ({ ...prev, dueAt: selectedDate }));
+            setEditedTask((obj) => ({ ...obj, dueAt: selectedDate }));
         }
     };
 
     const handleAddLink = () => {
         if (newLink.name.trim() && newLink.url.trim()) {
-            setEditedTask((prev) => ({
-                ...prev,
-                references: [...prev.references, newLink],
+            setEditedTask((obj) => ({
+                ...obj,
+                references: [...obj.references, newLink],
             }));
-            setNewLink({ name: '', url: '' });
+            setNewLink({ id: null, name: '', url: '' });
             setShowAddLinkModal(false);
         }
     };
+
+    const handelRemoveLink = (id:number | null, name:string) => {
+        if(id){
+            setEditedTask((obj) => ({
+                ...obj,
+                references: obj.references.filter((link) => link.id != id)
+            }));
+        }
+        else {
+            setEditedTask((obj) => ({
+                ...obj,
+                references: obj.references.filter((link) => link.name != name)
+            }));
+        }
+
+    }
 
     const renderItem = () => {
         return (
@@ -79,7 +91,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                         <TextInput
                             style={styles.Header}
                             value={editedTask.title}
-                            onChangeText={(text) => setEditedTask((prev) => ({ ...prev, title: text }))}
+                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, title: text }))}
                             placeholder="Task title"
                         />
                     ) : (
@@ -97,7 +109,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                                 name={editedTask.status ? 'check-circle' : 'circle'}
                                 size={20} style={{ marginLeft: 10 }}
                                 color="black"
-                                onPress={() => setEditedTask((prev) => ({ ...prev, status: !prev.status }))}
+                                onPress={() => setEditedTask((obj) => ({ ...obj, status: !obj.status }))}
                             />
                         )}
                     </View>
@@ -130,7 +142,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                         <TextInput
                             style={styles.input}
                             value={editedTask.description || ''}
-                            onChangeText={(text) => setEditedTask((prev) => ({ ...prev, description: text }))}
+                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, description: text }))}
                             placeholder="Add a description"
                             multiline
                         />
@@ -144,7 +156,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                         <TextInput
                             style={styles.input}
                             value={editedTask.comment || ''}
-                            onChangeText={(text) => setEditedTask((prev) => ({ ...prev, comment: text }))}
+                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, comment: text }))}
                             placeholder="Add a comment"
                             multiline
                         />
@@ -158,13 +170,21 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                         {isEditing && (
                             <MaterialIcons
                                 name="add-link"
-                                size={25} style={{ marginLeft: 10, paddingTop:15 }}
+                                size={25} style={{ marginLeft: 10, paddingTop: 15 }}
                                 color="grey"
                                 onPress={() => setShowAddLinkModal(true)}
                             />
                         )}
                     </View>
-                    <ReferenceLinks links={editedTask.references} />
+                    <ReferenceLinks links={editedTask.references} isEditing={isEditing} onRemove={(id, name) => handelRemoveLink(id, name)} />
+
+
+                    {/* Progress */}
+                    <View style={{ flexDirection: 'column', gap: 10 }}>
+                        <Text style={styles.subHeader}>Aim Progress </Text>
+                        <Text style={{ color: 'grey' }}>30% completed</Text>
+                        <Progress.Bar progress={0.3} width={300} animated={true} color='grey' />
+                    </View>
 
                     {/* Save Button */}
                     {isEditing ? (
@@ -221,13 +241,13 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                                         style={styles.modalInput}
                                         placeholder="Name"
                                         value={newLink.name}
-                                        onChangeText={(text) => setNewLink((prev) => ({ ...prev, name: text }))}
+                                        onChangeText={(text) => setNewLink((obj) => ({ ...obj, name: text }))}
                                     />
                                     <TextInput
                                         style={styles.modalInput}
                                         placeholder="URL"
                                         value={newLink.url}
-                                        onChangeText={(text) => setNewLink((prev) => ({ ...prev, url: text }))}
+                                        onChangeText={(text) => setNewLink((obj) => ({ ...obj, url: text }))}
                                     />
                                     <View style={styles.modalButtons}>
                                         <TouchableOpacity
@@ -236,12 +256,12 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                                         >
                                             <Text style={styles.modalButtonText}>Done</Text>
                                         </TouchableOpacity>
-                                        
+
                                         <TouchableOpacity
                                             style={styles.modalButton}
                                             onPress={() => (
                                                 setShowAddLinkModal(false),
-                                                setNewLink({ name: '', url: '' })
+                                                setNewLink({ id: null, name: '', url: '' })
                                             )}
                                         >
                                             <Text style={styles.modalButtonText}>Cancel</Text>

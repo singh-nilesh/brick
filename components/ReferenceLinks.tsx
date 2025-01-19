@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import * as Progress from 'react-native-progress';
 
 interface ReferenceLinksProps {
-    links: { name: string; url: string }[];
+    links: { id: number | null, name: string; url: string }[];
+    isEditing: boolean;
+    onRemove(id: number | null, name: string): void;
 }
 
-const ReferenceLinks = ({ links }: ReferenceLinksProps) => {
+
+const ReferenceLinks = ({ links, isEditing, onRemove }: ReferenceLinksProps) => {
 
     const openLink = async (url: string) => {
         const supported = await Linking.canOpenURL(url);
@@ -18,34 +20,30 @@ const ReferenceLinks = ({ links }: ReferenceLinksProps) => {
         }
     };
 
-    const renderItem = ({ item, index }: { item: { label: string; url: string }; index: number }) => (
-        <TouchableOpacity
-            style={styles.linkContainer}
-            onPress={() => openLink(item.url)}
-        >
-            <Text style={styles.linkText}>{index + 1}. {item.label}</Text>
-        </TouchableOpacity>
-    );
+    // function to remove link from list
+    const handelRemoveLink = (id:number | null, name:string) => {
+        if(id) {
+            
+        }
+    }
 
     return (
         <View style={styles.container}>
-            <View>
-                {links.map((link, index) => (
+            {links.map((link, index) => (
+                <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity
-                        key={index}
+                        key={link.name}
                         style={styles.linkContainer}
                         onPress={() => Linking.openURL(link.url)}
                     >
                         <Text style={styles.linkText}>{index + 1}. {link.name}</Text>
                     </TouchableOpacity>
-                ))}
-            </View>
-
-            <View style={{ flexDirection: 'column', gap: 10 }}>
-                <Text style={styles.title}>Aim Progress </Text>
-                <Text style={{ color: 'grey' }}>30% completed</Text>
-                <Progress.Bar progress={0.3} width={300} animated={true} color='grey' />
-            </View>
+                    {isEditing && (
+                        <MaterialIcons name="remove-circle-outline" size={25} color="red"
+                            onPress={() => onRemove(link.id, link.name)} />
+                    )}
+                </View>
+            ))}
         </View>
     );
 };
@@ -66,6 +64,7 @@ const styles = StyleSheet.create({
         paddingVertical: 0,
         paddingBottom: 10,
         marginHorizontal: 15,
+        width: '75%',
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },

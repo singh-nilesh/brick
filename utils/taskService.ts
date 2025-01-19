@@ -58,11 +58,12 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 
                 // Fetch references
                 const refQuery = await db.prepareAsync(
-                    `SELECT name, url FROM reference WHERE task_id = $todoId;`
+                    `SELECT id,name,url FROM reference WHERE task_id = $todoId;`
                 );
                 try {
                     const refRows = await refQuery.executeAsync({ $todoId: row.id });
                     references = (await refRows.getAllAsync()).map((ref: any) => ({
+                        id: ref.id,
                         name: ref.name,
                         url: ref.url,
                     }));

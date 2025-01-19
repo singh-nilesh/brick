@@ -53,11 +53,11 @@ const Upcoming = () => {
     }
 
     // Update Task
-    const handelUpdateTask = async () => {
+    const handelUpdateTask = async (oldTask:Task, newTask:Task) => {
+        if (!oldTask || !newTask) return;
         closeModal();
-        setRefreshDB(!refreshDB);
-    }
-
+        console.log('Updating Task', newTask);
+    }       
 
     return (
         <View style={styles.container}>
@@ -92,7 +92,7 @@ const Upcoming = () => {
                 task={selectedTask}
                 visible={showTaskBottomSheet}
                 onClose={closeModal}
-                onSave={() => handelUpdateTask()}
+                onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask)}
                 />
         </View>
     )

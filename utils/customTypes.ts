@@ -35,6 +35,7 @@ export interface Task {
     } | null;
 
     references: {
+        id: number | null;
         name: string;
         url: string;
     }[];
