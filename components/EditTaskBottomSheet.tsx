@@ -14,14 +14,14 @@ import { ScrollView } from 'react-native-gesture-handler';
 import * as Progress from 'react-native-progress';
 
 
-interface TaskBottomSheetProps {
+interface EditTaskBottomSheetProps {
     task: Task | null;
     visible: boolean;
     onClose: () => void;
     onSave: (updatedTask: Task) => void;
 }
 
-const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClose, onSave }) => {
+const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible, onClose, onSave }) => {
     if (!task) return null;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -277,7 +277,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
     );
 };
 
-export default TaskBottomSheet;
+export default EditTaskBottomSheet;
 
 const styles = StyleSheet.create({
     backdrop: {

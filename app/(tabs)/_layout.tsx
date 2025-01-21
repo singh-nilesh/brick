@@ -26,6 +26,10 @@ export default function TabLayout() {
     setMenuVisible(false); // Close the menu after selection
   };
 
+  const handleAddTask = () => {
+    console.log("Add Task");
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
 
@@ -98,7 +102,7 @@ export default function TabLayout() {
         <View style={styles.floatingMenu}>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => handleMenuOption("Add Task")}
+            onPress={() => handleAddTask()}
           >
             <Text style={styles.menuText}>Add Task</Text>
           </TouchableOpacity>

@@ -2,7 +2,7 @@ import { View, Text, SectionList, StyleSheet } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
-import TaskBottomSheet from '@/components/TaskBottomSheet';
+import TaskBottomSheet from '@/components/EditTaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import { getTasksForDate} from '@/utils/taskService';
