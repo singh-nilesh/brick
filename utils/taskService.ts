@@ -1,6 +1,8 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTask } from "./dbUtils";
 import { format, formatISO } from 'date-fns';
+import { Task } from "./customTypes";
+
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
@@ -90,3 +92,68 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
         throw error;
     }
 };
+
+// Update Task
+export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Task) => {
+
+    // compare old and new todo Entries
+    if (oldTask.title !== newTask.title ||
+        oldTask.status !== newTask.status ||
+        oldTask.description !== newTask.description ||
+        oldTask.dueAt !== newTask.dueAt ||
+        oldTask.comment !== newTask.comment) {
+
+        // Update the task
+        const updateQuery = `
+      UPDATE todos 
+      SET title = ?, status = ?, description = ?, due_at = ?, comment = ? 
+      WHERE id = ?`;
+
+        const updateStatement = await db.prepareAsync(updateQuery);
+
+        try {
+            await updateStatement.executeAsync([
+                newTask.title ?? '',
+                newTask.status ? 1 : 0,
+                newTask.description ?? '',
+                newTask.dueAt ? formatISO(newTask.dueAt) : null,
+                newTask.comment ?? '',
+                oldTask.id,
+            ]);
+            console.log('Task updated successfully');
+        }   
+        finally {
+            await updateStatement.finalizeAsync();
+        }
+    }
+
+    // Update references, loop through the reference list,
+    const delRefs = oldTask.references.filter((ref) => !newTask.references.includes(ref));
+    const addRefs = newTask.references.filter((ref) => ref.id === null);
+
+    // Delete references
+    if (delRefs.length > 0) {
+        const delRefQuery = await db.prepareAsync(`DELETE FROM reference WHERE id = ?`);
+        try {
+            delRefs.forEach(async (ref) => {
+                await delRefQuery.executeAsync([ref.id]);
+            });
+        } finally {
+            await delRefQuery.finalizeAsync();
+        }
+    }
+
+    // Add references
+    if (addRefs.length > 0) {
+        const addRefQuery = await db.prepareAsync(
+            `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
+        );
+        try {
+            addRefs.forEach(async (ref) => {
+                await addRefQuery.executeAsync([oldTask.id, ref.name, ref.url]);
+            });
+        } finally {
+            await addRefQuery.finalizeAsync();
+        }
+    }
+}

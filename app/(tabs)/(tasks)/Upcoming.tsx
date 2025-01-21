@@ -7,7 +7,7 @@ import { useFocusEffect } from 'expo-router';
 import TaskListItems from '@/components/TaskListItems';
 import { Task } from '@/utils/customTypes';
 import TaskBottomSheet from '@/components/TaskBottomSheet';
-import { getTasksForDate } from '@/utils/taskService';
+import { getTasksForDate, updateTask } from '@/utils/taskService';
 import { markDeleted } from '@/utils/todoService';
 
 
@@ -56,7 +56,8 @@ const Upcoming = () => {
     const handelUpdateTask = async (oldTask:Task, newTask:Task) => {
         if (!oldTask || !newTask) return;
         closeModal();
-        console.log('Updating Task', newTask);
+        await updateTask(db, oldTask, newTask);
+        setRefreshDB(!refreshDB);
     }       
 
     return (
