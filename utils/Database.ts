@@ -37,7 +37,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE TABLE IF NOT EXISTS habits (
             id INTEGER PRIMARY KEY,
             title TEXT NOT NULL,
-            group_id INTEGER NOT NULL DEFAULT 3 REFERENCES groups(id),
+            group_id INTEGER REFERENCES groups(id),
             created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
             interval INTEGER NOT NULL DEFAULT 1,
             by_week_day TEXT NOT NULL DEFAULT '[]',
@@ -49,7 +49,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
             CREATE TABLE IF NOT EXISTS todos (
             id INTEGER PRIMARY KEY,
-            group_id INTEGER NOT NULL DEFAULT 1 REFERENCES groups(id),
+            group_id INTEGER REFERENCES groups(id),
             title TEXT NOT NULL,
             description TEXT,
             comment TEXT,
@@ -83,22 +83,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
         // Insert Queries
         // groups
-        await db.runAsync(  // Todo group
-            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'Todos',                     // title
-            'Default group for todos',  // description
-            '#FFFFFF',                  // group_bgColor
-            '#000000'                   // group_textColor
-        );
-
-        await db.runAsync( // Tasks group
-            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'Tasks',                     // title
-            'Default group for todos',  // description
-            '#FFFFFF',                  // group_bgColor
-            '#000000'                   // group_textColor
-        );
-
         const habit_groupId = (
             await db.runAsync(
                 'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',

@@ -7,7 +7,7 @@ import { format } from "date-fns"; // Import date-fns for formatting today's dat
 const categories = [
   { name: "Today", route: "/(tabs)/(tasks)/Today" },
   { name: "Upcoming", route: "/(tabs)/(tasks)/Upcoming" },
-  { name: "Todo", route: "/(tabs)/(tasks)/Todo" }, // Add more categories if needed
+  { name: "Todo", route: "/(tabs)/(tasks)/TodoScreen" }, // Add more categories if needed
 ];
 
 const TasksLayout = () => {

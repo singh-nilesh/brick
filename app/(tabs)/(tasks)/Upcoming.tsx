@@ -2,13 +2,13 @@ import { View, StyleSheet, FlatList } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import HorizontalDatePicker from '@/components/HorizontalDatePicker'
 import HeaderDatePicker from '@/components/HeaderDatePicker';
-import { addTodo, getTasksForDate, getTodos, markDeleted, updateTodo } from '@/utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import TaskListItems from '@/components/TaskListItems';
 import { Task } from '@/utils/customTypes';
 import TaskBottomSheet from '@/components/TaskBottomSheet';
-import { addDays } from 'date-fns';
+import { getTasksForDate, updateTask } from '@/utils/taskService';
+import { markDeleted } from '@/utils/todoService';
 
 
 const Upcoming = () => {
@@ -29,7 +29,6 @@ const Upcoming = () => {
     // Hook to fetch todos from the database
     useFocusEffect(
         useCallback(() => {
-            console.log('upcoming --> date',selectedDate);
             fetchTodos();
         }, [db, refreshDB, selectedDate])
     );
@@ -40,20 +39,7 @@ const Upcoming = () => {
         await markDeleted(db, id);
         setRefreshDB(!refreshDB);
     };
-
-    // Function to update a todo
-    const EditTask = async (id: number, Text: string) => {
-        await updateTodo(db, id, Text);
-        setRefreshDB(!refreshDB);
-    };
-
-    // Function to add a new todo
-    const handleAddTodo = async (newTodo: string) => {
-        await addTodo(db, newTodo);
-        setRefreshDB(!refreshDB);
-    };
-
-
+    
     // Open Task details
     const openModal = (item: Task) => {
         setSelectedTask(item);
@@ -66,6 +52,13 @@ const Upcoming = () => {
         setSelectedTask(null);
     }
 
+    // Update Task
+    const handelUpdateTask = async (oldTask:Task, newTask:Task) => {
+        if (!oldTask || !newTask) return;
+        closeModal();
+        await updateTask(db, oldTask, newTask);
+        setRefreshDB(!refreshDB);
+    }       
 
     return (
         <View style={styles.container}>
@@ -99,7 +92,9 @@ const Upcoming = () => {
             <TaskBottomSheet
                 task={selectedTask}
                 visible={showTaskBottomSheet}
-                onClose={closeModal} />
+                onClose={closeModal}
+                onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask)}
+                />
         </View>
     )
 }

@@ -5,7 +5,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Task } from '@/utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
-import { markAsDone, markAsNotDone } from '@/utils/taskService';
+import { markAsDone, markAsNotDone } from '@/utils/todoService';
 
 
 interface TaskListItemsProps {

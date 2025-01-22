@@ -4,9 +4,9 @@ import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import TaskBottomSheet from '@/components/TaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
-import { getTasksForDate, markDeleted } from '@/utils/taskService';
 import { useFocusEffect } from 'expo-router';
-
+import { getTasksForDate} from '@/utils/taskService';
+import { markDeleted } from '@/utils/todoService';
 
 const Today = () => {
   const db = useSQLiteContext();
@@ -61,6 +61,14 @@ const Today = () => {
     setSelectedTask(null);
   }
 
+
+  // Update Task
+  const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
+    if (!oldTask || !newTask) return;
+    closeModal();
+    console.log('Updating Task');
+  }
+  
   return (
     <View style={styles.container}>
       <SectionList
@@ -94,8 +102,8 @@ const Today = () => {
       <TaskBottomSheet
         task={selectedTask}
         visible={showTaskBottomSheet}
-        onClose={closeModal} />
-
+        onClose={closeModal}
+        onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask) }/>
     </View>
   );
 };

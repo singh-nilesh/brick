@@ -1,144 +1,159 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { mapDBToTask, mapTaskToDB } from "./dbUtils";
+import { mapDBToTask } from "./dbUtils";
 import { format, formatISO } from 'date-fns';
 import { Task } from "./customTypes";
 
 
-// Add a Todo
-export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `INSERT INTO todos (title)
-        VALUES ($title)`
-    );
-    try {
-        await statement.executeAsync({ $title: new_title });
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-// Get Todos
-export const getTodos = async (db: SQLiteDatabase) => {
-    const statement = await db.prepareAsync(`SELECT * FROM todos WHERE is_deleted = 0 AND is_task = 0`);
-    try {
-        const result = await statement.executeAsync();
-        const rows = await result.getAllAsync();
-        return rows.map(mapDBToTask);  // Map each database row to a Task object
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-// Update Todo
-export const updateTodo = async (db: SQLiteDatabase, id: number, new_title: string): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET task = $task WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({
-            $task: new_title,
-            $id: id,
-        });
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-
-
-
-// Add a Task
-export const addTask = async (db: SQLiteDatabase, newTask: Task): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `INSERT INTO todos (group_id, title, description, comment, status, priority, due_at, is_task, habit_id)
-        VALUES ($group_id, $title, $description, $comment, $status, $priority, $due_at, $is_task, $habit_id)`
-    );
-
-    try {
-        let varTask = mapTaskToDB(newTask);
-        await statement.executeAsync({
-            $group_id: varTask.group_id,
-            $title: varTask.title,
-            $description: varTask.description,
-            $comment: varTask.comment,
-            $status: varTask.status,
-            $priority: varTask.priority,
-            $due_at: varTask.due_at,
-            $is_task: 1,
-            $habit_id: varTask.habit_id
-        });
-    } finally {
-        await statement.finalizeAsync();
-    }
-};
-
-
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
-    // Convert dueDate to ISO format for querying
-    
-    const date = format(dueDate, 'yyyy-MM-dd');
-    console.log('db --> date: ', date);
-
-    const statement = await db.prepareAsync(
-        `SELECT * FROM todos 
-         WHERE is_deleted = 0 
-           AND is_task = 1 
-           AND strftime('%Y-%m-%d', due_at) = $date`
-    );
+    const formattedDate = format(dueDate, 'yyyy-MM-dd');
 
     try {
-        const result = await statement.executeAsync({ $date: date });
-        return await result.getAllAsync();
-    } finally {
-        await statement.finalizeAsync();
+        // Fetch all tasks for the given date
+        const todoQuery = await db.prepareAsync(
+            `SELECT * FROM todos 
+             WHERE is_deleted = 0 
+               AND is_task = 1 
+               AND strftime('%Y-%m-%d', due_at) = $date`
+        );
+        let todoResult;
+        try {
+            const todoRows = await todoQuery.executeAsync({ $date: formattedDate });
+            todoResult = await todoRows.getAllAsync();
+        } finally {
+            await todoQuery.finalizeAsync();
+        }
+
+
+        // Fetch task details
+        const taskDetails = await Promise.all(
+            todoResult.map(async (row: any) => {
+                let group = null;
+                let habit = null;
+                let references = null;
+
+                // Fetch group details if group_id is not null
+                if (row.group_id) {
+                    const groupQuery = await db.prepareAsync(
+                        `SELECT title AS group_title, group_bgColor, group_textColor FROM groups WHERE id = $groupId;`
+                    );
+                    try {
+                        const groupRows = await groupQuery.executeAsync({ $groupId: row.group_id });
+                        group = await groupRows.getFirstAsync();
+                    } finally {
+                        await groupQuery.finalizeAsync();
+                    }
+                }
+
+                // Fetch habit details if habit_id is not null
+                if (row.habit_id) {
+                    const habitQuery = await db.prepareAsync(
+                        `SELECT title AS habit_title FROM habits WHERE id = $habitId;`
+                    );
+                    try {
+                        const habitRows = await habitQuery.executeAsync({ $habitId: row.habit_id });
+                        habit = await habitRows.getFirstAsync();
+                    } finally {
+                        await habitQuery.finalizeAsync();
+                    }
+                }
+
+                // Fetch references
+                const refQuery = await db.prepareAsync(
+                    `SELECT id,name,url FROM reference WHERE task_id = $todoId;`
+                );
+                try {
+                    const refRows = await refQuery.executeAsync({ $todoId: row.id });
+                    references = (await refRows.getAllAsync()).map((ref: any) => ({
+                        id: ref.id,
+                        name: ref.name,
+                        url: ref.url,
+                    }));
+                } finally {
+                    await refQuery.finalizeAsync();
+                }
+
+                const data = {
+                    ...row,
+                    group: group ? group : null,
+                    habit: habit ? habit : null,
+                    references,
+                };
+                //console.log(data);
+                return data;
+            })
+        );
+
+        // return mapped task.
+        return taskDetails.map(mapDBToTask);
+
+    } catch (error) {
+        console.error("Error fetching tasks:", error);
+        throw error;
     }
 };
 
+// Update Task
+export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Task) => {
 
+    // compare old and new todo Entries
+    if (oldTask.title !== newTask.title ||
+        oldTask.status !== newTask.status ||
+        oldTask.description !== newTask.description ||
+        oldTask.dueAt !== newTask.dueAt ||
+        oldTask.comment !== newTask.comment) {
 
+        // Update the task
+        const updateQuery = `
+      UPDATE todos 
+      SET title = ?, status = ?, description = ?, due_at = ?, comment = ? 
+      WHERE id = ?`;
 
-// Delete Task or todo
-export const markDeleted = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET is_deleted = 1, deleted_at = $deletedAt WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({
-            $deletedAt: formatISO(new Date()),
-            $id: id,
-        });
-    } finally {
-        await statement.finalizeAsync();
+        const updateStatement = await db.prepareAsync(updateQuery);
+
+        try {
+            await updateStatement.executeAsync([
+                newTask.title ?? '',
+                newTask.status ? 1 : 0,
+                newTask.description ?? '',
+                newTask.dueAt ? formatISO(newTask.dueAt) : null,
+                newTask.comment ?? '',
+                oldTask.id,
+            ]);
+            console.log('Task updated successfully');
+        }   
+        finally {
+            await updateStatement.finalizeAsync();
+        }
     }
-};
 
+    // Update references, loop through the reference list,
+    const delRefs = oldTask.references.filter((ref) => !newTask.references.includes(ref));
+    const addRefs = newTask.references.filter((ref) => ref.id === null);
 
-// Complete Todo or Task
-export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET status = 1, completed_at = $completedAt WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({
-            $completedAt: formatISO(new Date()),
-            $id: id,
-        });
-    } finally {
-        await statement.finalizeAsync();
+    // Delete references
+    if (delRefs.length > 0) {
+        const delRefQuery = await db.prepareAsync(`DELETE FROM reference WHERE id = ?`);
+        try {
+            delRefs.forEach(async (ref) => {
+                await delRefQuery.executeAsync([ref.id]);
+            });
+        } finally {
+            await delRefQuery.finalizeAsync();
+        }
     }
-};
 
-
-// Uncompleted Todo or Task
-export const markAsNotDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE todos SET status = 0, completed_at = NULL WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({ $id: id });
-    } finally {
-        await statement.finalizeAsync();
+    // Add references
+    if (addRefs.length > 0) {
+        const addRefQuery = await db.prepareAsync(
+            `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
+        );
+        try {
+            addRefs.forEach(async (ref) => {
+                await addRefQuery.executeAsync([oldTask.id, ref.name, ref.url]);
+            });
+        } finally {
+            await addRefQuery.finalizeAsync();
+        }
     }
-};
-
+}

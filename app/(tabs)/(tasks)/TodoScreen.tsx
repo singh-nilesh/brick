@@ -1,22 +1,21 @@
 import { View, Text, FlatList, StyleSheet } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-expo';
-import { Task } from '@/utils/customTypes';
+import { Todo } from '@/utils/customTypes';
 import TodoListItems from '@/components/TodoListItems';
 import { useSQLiteContext } from 'expo-sqlite';
-import { addTodo, getTodos, markDeleted, updateTodo } from '@/utils/taskService';
+import { addTodo, getTodos, markDeleted, updateTodo } from '@/utils/todoService';
 import FooterTaskInput from '@/components/FooterTaskInput';
 import { useFocusEffect } from 'expo-router';
 
-const Todo = () => {
-    const { user } = useUser();
+const TodoScreen = () => {
     const db = useSQLiteContext();
-    const [todos, setTodos] = useState<Task[]>([]);
+    const [todos, setTodos] = useState<Todo[]>([]);
     const [refreshDB, setRefreshDB] = useState(false);
 
 
     const fetchTodos = async () => {
-        const todo_list = (await getTodos(db)) as Task[];
+        const todo_list = (await getTodos(db)) as Todo[];
         setTodos(todo_list);
     };
 
@@ -75,7 +74,7 @@ const Todo = () => {
     )
 }
 
-export default Todo
+export default TodoScreen
 
 
 const styles = StyleSheet.create({

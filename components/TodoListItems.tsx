@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import Feather from '@expo/vector-icons/Feather';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Task } from '@/utils/customTypes';
+import { Todo } from '@/utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
-import { markAsDone, markAsNotDone } from '@/utils/taskService';
+import { markAsDone, markAsNotDone } from '@/utils/todoService';
 
 interface TaskListItemsProps {
     db: SQLiteDatabase;
-    item: Task;
-    setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
+    item: Todo;
+    setTasks: React.Dispatch<React.SetStateAction<Todo[]>>;
     onDelete: () => void;
     onEdit: (newTask: string) => void;
 }
