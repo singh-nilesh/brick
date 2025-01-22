@@ -94,6 +94,29 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
         console.log('Group- Habits:', habit_groupId);
 
+        await db.runAsync(
+            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
+            'Demo Grp 1',
+            'dg1',
+            '#A35C7A',
+            '#000000'
+        );
+
+        await db.runAsync(
+            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
+            'demo 2',
+            'dg 2',
+            '#BE3144',
+            '#000000'
+        );
+        await db.runAsync(
+            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
+            'dg3',
+            'dgp3',
+            '#FF9D23',
+            '#000000'
+        )
+
 
         // habits
         const habitId = (

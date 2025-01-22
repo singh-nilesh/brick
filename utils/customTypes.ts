@@ -40,3 +40,24 @@ export interface Task {
         url: string;
     }[];
 }
+
+export interface Group {
+    id: number;
+    title: string;
+    description?: string | null;
+    bgColor: string;
+    textColor: string;
+    newTaskCount: number;
+}
+
+export interface Habit {
+    id: number;
+    title: string;
+    groupId: number | null;
+    createdAt: Date;
+    interval: number | 1;
+    byWeekDay: number[];
+    byMonth: number | 1;
+    dtStart: Date;
+    dtEnd: Date;
+}
