@@ -6,7 +6,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import TaskListItems from '@/components/TaskListItems';
 import { Task } from '@/utils/customTypes';
-import TaskBottomSheet from '@/components/TaskBottomSheet';
+import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
 import { getTasksForDate, updateTask } from '@/utils/taskService';
 import { markDeleted } from '@/utils/todoService';
 
@@ -89,7 +89,7 @@ const Upcoming = () => {
                 }
             />
 
-            <TaskBottomSheet
+            <EditTaskBottomSheet
                 task={selectedTask}
                 visible={showTaskBottomSheet}
                 onClose={closeModal}

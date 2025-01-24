@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { Task } from '@/utils/customTypes';
+import { Task, Group } from '@/utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -10,41 +10,54 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
 
 
-//import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import * as Progress from 'react-native-progress';
-
-
-interface TaskBottomSheetProps {
-    task: Task | null;
+interface AddTaskBottomSheetProps {
+    groups: Group[];
     visible: boolean;
     onClose: () => void;
     onSave: (updatedTask: Task) => void;
 }
 
-const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClose, onSave }) => {
-    if (!task) return null;
+const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible, onClose, onSave }) => {
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [editedTask, setEditedTask] = useState({ ...task });
+    const emptyTask: Task = {
+        id: 0,
+        title: '',
+        description: '',
+        status: false,
+        priority: 5,
+        createdAt: new Date(),
+        dueAt: new Date(),
+        group: null,
+        habit: null,
+        references: [],
+        comment: '',
+        isDeleted: false
+    };
+    const [newTask, setNewTask] = useState<Task>(emptyTask);
+
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showAddLinkModal, setShowAddLinkModal] = useState(false);
     const [newLink, setNewLink] = useState({ id: null, name: '', url: '' });
 
     const handleSave = () => {
-        onSave(editedTask);
-        setIsEditing(false);
+        if(newTask.title.trim() === ''){
+            alert('Please enter a title');
+        } else {
+        onSave(newTask);
+        setNewTask(emptyTask);
+        }
     };
 
     const handleDateChange = (event: any, selectedDate: Date | undefined) => {
         setShowDatePicker(false);
         if (selectedDate) {
-            setEditedTask((obj) => ({ ...obj, dueAt: selectedDate }));
+            setNewTask((obj) => ({ ...obj, dueAt: selectedDate }));
         }
     };
 
     const handleAddLink = () => {
         if (newLink.name.trim() && newLink.url.trim()) {
-            setEditedTask((obj) => ({
+            setNewTask((obj) => ({
                 ...obj,
                 references: [...obj.references, newLink],
             }));
@@ -53,15 +66,15 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
         }
     };
 
-    const handelRemoveLink = (id:number | null, name:string) => {
-        if(id){
-            setEditedTask((obj) => ({
+    const handelRemoveLink = (id: number | null, name: string) => {
+        if (id) {
+            setNewTask((obj) => ({
                 ...obj,
                 references: obj.references.filter((link) => link.id != id)
             }));
         }
         else {
-            setEditedTask((obj) => ({
+            setNewTask((obj) => ({
                 ...obj,
                 references: obj.references.filter((link) => link.name != name)
             }));
@@ -76,130 +89,135 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                     showsVerticalScrollIndicator={true}
                     style={{ marginBottom: 20 }}
                 >
-                    {/* Group and Habit Badges */}
-                    <View style={styles.badgeContainer}>
-                        {editedTask.group && (
-                            <Text style={[styles.tag, { backgroundColor: editedTask.group.bgColor }]}>{editedTask.group.title}</Text>
-                        )}
-                        {editedTask.habit && (
-                            <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>{editedTask.habit.title}</Text>
-                        )}
-                    </View>
+                    <MaterialIcons name='close' size={35} style={styles.closeIcon} onPress={() => {
+                        onClose();
+                        setNewTask(emptyTask);
+                    }} />
+
+
+                    {/* Group Selection */}
+                    <Text style={styles.subHeader}>Group:</Text>
+                    <ScrollView horizontal style={styles.groupContainer}>
+                        {groups.map((grp) => (
+                            <TouchableOpacity
+                                key={grp.id}
+                                style={[
+                                    styles.groupButton,
+                                    {
+                                        backgroundColor: grp.bgColor,
+                                        borderColor: newTask.group?.id === grp.id ? 'black' : grp.bgColor,
+                                        borderWidth: newTask.group?.id === grp.id ? 2 : 0,
+                                        borderRadius: newTask.group?.id === grp.id ? 5 : 15,
+                                    },
+                                ]}
+                                onPress={() => {
+                                    const grpData = {
+                                        id: grp.id,
+                                        title: grp.title,
+                                        bgColor: grp.bgColor,
+                                        textColor: grp.textColor
+                                    };
+                                    setNewTask((obj) => ({
+                                        ...obj,
+                                        group: grpData
+                                    }));
+                                }}
+                            >
+                                <Text style={{ color: grp.textColor, fontWeight: 'bold' }}>
+                                    {grp.title}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
 
                     {/* Task Header */}
-                    {isEditing ? (
-                        <TextInput
-                            style={styles.Header}
-                            value={editedTask.title}
-                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, title: text }))}
-                            placeholder="Task title"
-                        />
-                    ) : (
-                        <Text style={styles.Header}>{task.title}</Text>
-                    )}
-
-                    {/* Task Status */}
-                    <View style={styles.rowContainer}>
-                        <Text style={styles.tag}>Status:</Text>
-                        <Text style={[styles.tag, styles.standardTag]}>
-                            {editedTask.status ? 'Completed' : 'Pending'}
-                        </Text>
-                        {isEditing && (
-                            <Feather
-                                name={editedTask.status ? 'check-circle' : 'circle'}
-                                size={20} style={{ marginLeft: 10 }}
-                                color="black"
-                                onPress={() => setEditedTask((obj) => ({ ...obj, status: !obj.status }))}
-                            />
-                        )}
-                    </View>
+                    <TextInput
+                        style={styles.Header}
+                        value={newTask.title}
+                        onChangeText={(text) => setNewTask((obj) => ({ ...obj, title: text }))}
+                        placeholder="Task title"
+                    />
 
                     {/* Due Date */}
                     <View style={styles.rowContainer}>
                         <Text style={styles.tag}>Due date:</Text>
-                        {isEditing ? (
-                            <>
-                                <Text style={[styles.tag, styles.standardTag]}>
-                                    {editedTask.dueAt ? format(editedTask.dueAt, 'dd MMM') : 'Select date'}
-                                </Text>
-                                <Feather
-                                    name="calendar"
-                                    size={20} style={{ marginLeft: 10 }}
-                                    color="black"
-                                    onPress={() => setShowDatePicker(true)}
-                                />
-                            </>
-                        ) : (
+                        <>
                             <Text style={[styles.tag, styles.standardTag]}>
-                                {task.dueAt ? format(task.dueAt, 'dd MMM') : 'No due date'}
+                                {newTask.dueAt ? format(newTask.dueAt, 'dd MMM') : 'Select date'}
                             </Text>
-                        )}
+                            <Feather
+                                name="calendar"
+                                size={20} style={{ marginLeft: 10 }}
+                                color="black"
+                                onPress={() => setShowDatePicker(true)}
+                            />
+                        </>
+                    </View>
+
+                    {/* Priority Selection */}
+                    <Text style={styles.subHeader}>Set Priority:</Text>
+                    <View style={styles.priorityContainer}>
+                        {[1, 2, 3, 4, 5].map((priority) => (
+                            <TouchableOpacity
+                                key={priority}
+                                style={[
+                                    styles.priorityButton,
+                                    {
+                                        backgroundColor: newTask.priority === priority ? 'black' : '#f0f0f0',
+                                    },
+                                ]}
+                                onPress={() => setNewTask((obj) => ({ ...obj, priority }))}
+                            >
+                                <Text
+                                    style={{
+                                        color: newTask.priority === priority ? 'white' : 'black',
+                                        fontWeight: 'bold',
+                                    }}
+                                >
+                                    {priority}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
 
                     {/* Description */}
                     <Text style={styles.subHeader}>Description:</Text>
-                    {isEditing ? (
-                        <TextInput
-                            style={styles.input}
-                            value={editedTask.description || ''}
-                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, description: text }))}
-                            placeholder="Add a description"
-                            multiline
-                        />
-                    ) : (
-                        <Text style={styles.description}>{task.description || 'Add a description'}</Text>
-                    )}
+                    <TextInput
+                        style={styles.input}
+                        value={newTask.description || ''}
+                        onChangeText={(text) => setNewTask((obj) => ({ ...obj, description: text }))}
+                        placeholder="Add a description"
+                        multiline
+                    />
 
                     {/* Comment */}
                     <Text style={styles.subHeader}>Comment:</Text>
-                    {isEditing ? (
-                        <TextInput
-                            style={styles.input}
-                            value={editedTask.comment || ''}
-                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, comment: text }))}
-                            placeholder="Add a comment"
-                            multiline
-                        />
-                    ) : (
-                        <Text style={styles.description}>{task.comment || 'Add a comment'}</Text>
-                    )}
+
+                    <TextInput
+                        style={styles.input}
+                        value={newTask.comment || ''}
+                        onChangeText={(text) => setNewTask((obj) => ({ ...obj, comment: text }))}
+                        placeholder="Add a comment"
+                        multiline
+                    />
 
                     {/* Reference Links */}
                     <View style={styles.rowContainer}>
                         <Text style={styles.subHeader}>Reference Links:</Text>
-                        {isEditing && (
-                            <MaterialIcons
-                                name="add-link"
-                                size={25} style={{ marginLeft: 10, paddingTop: 15 }}
-                                color="grey"
-                                onPress={() => setShowAddLinkModal(true)}
-                            />
-                        )}
-                    </View>
-                    <ReferenceLinks links={editedTask.references} isEditing={isEditing} onRemove={(id, name) => handelRemoveLink(id, name)} />
 
-
-                    {/* Progress */}
-                    <View style={{ flexDirection: 'column', gap: 10 }}>
-                        <Text style={styles.subHeader}>Aim Progress </Text>
-                        <Text style={{ color: 'grey' }}>30% completed</Text>
-                        <Progress.Bar progress={0.3} width={300} animated={true} color='grey' />
+                        <MaterialIcons
+                            name="add-link"
+                            size={25} style={{ marginLeft: 10, paddingTop: 15 }}
+                            color="grey"
+                            onPress={() => setShowAddLinkModal(true)}
+                        />
                     </View>
+                    <ReferenceLinks links={newTask.references} isEditing={true} onRemove={(id, name) => handelRemoveLink(id, name)} />
 
                     {/* Save Button */}
-                    {isEditing ? (
-                        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                            <Text style={styles.saveButtonText}>Save</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <Feather
-                            name="edit"
-                            size={25}
-                            color="black"
-                            style={styles.editIcon}
-                            onPress={() => setIsEditing(true)}
-                        />
-                    )}
+                    <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                        <Text style={styles.saveButtonText}>Save</Text>
+                    </TouchableOpacity>
                 </ScrollView>
             </View>
         )
@@ -217,7 +235,10 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                     style={styles.backdrop}
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
-                    <TouchableOpacity style={styles.touchableArea} onPress={onClose} />
+                    <TouchableOpacity style={styles.touchableArea} onPress={() => {
+                        onClose();
+                    }} />
+
 
                     {/* Task Details */}
                     {renderItem()}
@@ -225,7 +246,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
                     {/* Date Picker */}
                     {showDatePicker && (
                         <DateTimePicker
-                            value={editedTask.dueAt || new Date()}
+                            value={newTask.dueAt || new Date()}
                             mode="date"
                             display="default"
                             onChange={handleDateChange}
@@ -277,7 +298,7 @@ const TaskBottomSheet: React.FC<TaskBottomSheetProps> = ({ task, visible, onClos
     );
 };
 
-export default TaskBottomSheet;
+export default AddTaskBottomSheet;
 
 const styles = StyleSheet.create({
     backdrop: {
@@ -292,7 +313,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        height: '75%',
+        height: '80%',
         padding: 20,
     },
     badgeContainer: {
@@ -319,9 +340,11 @@ const styles = StyleSheet.create({
         color: '#5B00A8',
     },
     Header: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         marginBottom: 25,
+        borderBottomWidth: 1,
+
     },
     subHeader: {
         fontSize: 16,
@@ -352,10 +375,11 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
-    editIcon: {
+    closeIcon: {
         position: 'absolute',
-        top: 20,
-        right: 20,
+        top: 0,
+        right: 0,
+        zIndex: 1,
     },
     linkModalBackdrop: {
         flex: 1,
@@ -390,4 +414,27 @@ const styles = StyleSheet.create({
     modalButtonText: {
         color: '#fff',
     },
+    groupContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: 10,
+    },
+    groupButton: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 15,
+        margin: 5,
+    },
+    priorityContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    priorityButton: {
+        padding: 10,
+        borderRadius: 5,
+        width: '18%',
+        alignItems: 'center',
+    },
+
 });

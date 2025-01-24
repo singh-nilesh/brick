@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import Octicons from '@expo/vector-icons/Octicons';
 import Foundation from '@expo/vector-icons/Foundation';
 import { Tabs } from "expo-router";
 import { View, TouchableOpacity, StyleSheet, Text, KeyboardAvoidingView, TouchableWithoutFeedback } from "react-native";
@@ -8,6 +7,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 import * as SQLite from 'expo-sqlite';
+import AddTaskBottomSheet from "@/components/AddTaskBottomSheet";
+import { Group, Task } from "@/utils/customTypes";
+import { addHabit, addTask, getGroups } from "@/utils/taskService";
+import AddHabitBottomSheet from "@/components/AddHabitBotomSheet";
 
 
 export default function TabLayout() {
@@ -16,14 +19,38 @@ export default function TabLayout() {
   useDrizzleStudio(db);
 
   const [menuVisible, setMenuVisible] = useState(false);
+  const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
+  const [addHabitModalVisible, setAddHabitModalVisible] = useState(false);
+  const [fetchGroups, setFetchGroups] = useState(false);
+  const [groups, setGroups] = useState<Group[]>([]);
+
+  useEffect(() => {
+    // Fetch groups
+    const fetchGroupsAsync = async () => {
+      const groups = await getGroups(db);
+      setGroups(groups as Group[]);
+    };
+    fetchGroupsAsync();
+  }, [fetchGroups]);
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
   };
 
   const handleMenuOption = (option: string) => {
-    console.log(option); // Handle the selected menu option here
+    console.log(option); // Handle the selected menu option
     setMenuVisible(false); // Close the menu after selection
+  };
+
+  const handleAddTask = async (newTask: Task) => {
+    await addTask(db, newTask);
+    setAddTaskModalVisible(false);
+    
+  };
+
+  const handleAddHabit = async (newHabit: any) => {
+    await addHabit(db, newHabit);
+    setAddHabitModalVisible(false);
   };
 
   return (
@@ -92,13 +119,16 @@ export default function TabLayout() {
         />
       </Tabs>
 
-
       {/* Floating Menu */}
       {menuVisible && (
         <View style={styles.floatingMenu}>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => handleMenuOption("Add Task")}
+            onPress={() => {
+              setFetchGroups(!fetchGroups);
+              setAddTaskModalVisible(true);
+              setMenuVisible(false);
+            }}
           >
             <Text style={styles.menuText}>Add Task</Text>
           </TouchableOpacity>
@@ -110,12 +140,29 @@ export default function TabLayout() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => handleMenuOption("Add Habit")}
+            onPress={() => setAddHabitModalVisible(true)}
           >
             <Text style={styles.menuText}>Add Habit</Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Add Task Bottom Sheet */}
+      <View style={{ position: 'absolute', bottom: 0 }}>
+        <AddTaskBottomSheet
+          groups={groups}
+          visible={addTaskModalVisible}
+          onClose={() => setAddTaskModalVisible(false)}
+          onSave={(newTask) => handleAddTask(newTask)}
+        />
+
+        <AddHabitBottomSheet
+          groups={groups}
+          visible={addHabitModalVisible}
+          onClose={() => setAddHabitModalVisible(false)}
+          onSave={(newHabit) => handleAddHabit(newHabit)}
+        />
+      </View>
 
 
       {/* Connecting Line */}
@@ -125,6 +172,7 @@ export default function TabLayout() {
       <TouchableOpacity style={styles.floatingButton} onPress={toggleMenu}>
         <AntDesign name="pluscircle" size={45} color="black" />
       </TouchableOpacity>
+
     </SafeAreaView>
   );
 }
@@ -201,4 +249,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "white",
   },
+
 });

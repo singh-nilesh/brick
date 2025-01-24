@@ -1,8 +1,47 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTask } from "./dbUtils";
 import { format, formatISO } from 'date-fns';
-import { Task } from "./customTypes";
+import { Habit, Task } from "./customTypes";
 
+
+// Add Tasks
+export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
+    console.log(newTask);
+
+    const insertQuery = await db.prepareAsync(
+        `INSERT INTO todos (group_id, title, description, comment, priority, due_at, is_task) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+    var TaskId: number;
+
+    try {
+        TaskId = (
+            await insertQuery.executeAsync([
+                newTask.group?.id ?? null,
+                newTask.title,
+                newTask.description ?? '',
+                newTask.comment ?? '',
+                newTask.priority ?? 5,
+                newTask.dueAt ? formatISO(newTask.dueAt) : null,
+                1,
+            ]))?.lastInsertRowId;
+    }
+    finally {
+        await insertQuery.finalizeAsync();
+    }
+
+    // Add references
+    if (newTask.references.length > 0) {
+        const addRefQuery = await db.prepareAsync(
+            `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
+        );
+        try {
+            newTask.references.forEach(async (ref) => {
+                await addRefQuery.executeAsync([TaskId, ref.name, ref.url]);
+            });
+        } finally {
+            await addRefQuery.finalizeAsync();
+        }
+    }
+}
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
@@ -121,7 +160,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
                 oldTask.id,
             ]);
             console.log('Task updated successfully');
-        }   
+        }
         finally {
             await updateStatement.finalizeAsync();
         }
@@ -155,5 +194,50 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
         } finally {
             await addRefQuery.finalizeAsync();
         }
+    }
+}
+
+// get all Group
+export const getGroups = async (db: SQLiteDatabase) => {
+    const groupsQuery = await db.prepareAsync(
+        `SELECT * FROM groups`
+    );
+    try {
+        const groupsRows = await groupsQuery.executeAsync();
+        const groups = await groupsRows.getAllAsync();
+        const groupsList = groups.map((group: any) => ({
+            id: group.id,
+            title: group.title,
+            description: group.description,
+            bgColor: group.group_bgColor,
+            textColor: group.group_textColor,
+            newTaskCount: 0,
+        }));
+        return groupsList;
+    } finally {
+        await groupsQuery.finalizeAsync();
+    }
+}
+
+
+// Add Habit
+export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
+    const insertQuery = await db.prepareAsync(
+        `INSERT INTO habits (group_id, title, interval, by_week_day, dt_start, dt_end) VALUES (?, ?, ?, ?, ?, ?)`);
+    var HabitId: number;
+
+    try {
+        await insertQuery.executeAsync([
+            newHabit.groupId,
+            newHabit.title,
+            newHabit.interval ?? 1,
+            JSON.stringify(newHabit.byWeekDay),
+            formatISO(newHabit.dtStart),
+            formatISO(newHabit.dtEnd),
+        ])
+        console.log('Habit added successfully');
+    }
+    finally {
+        await insertQuery.finalizeAsync();
     }
 }
