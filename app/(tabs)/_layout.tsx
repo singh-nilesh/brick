@@ -9,7 +9,9 @@ import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 import * as SQLite from 'expo-sqlite';
 import AddTaskBottomSheet from "@/components/AddTaskBottomSheet";
 import { Group, Task } from "@/utils/customTypes";
-import { addTask, getGroups } from "@/utils/taskService";
+import { addHabit, addTask, getGroups } from "@/utils/taskService";
+import AddHabitBottomSheet from "@/components/AddHabitBotomSheet";
+
 
 export default function TabLayout() {
 
@@ -18,6 +20,7 @@ export default function TabLayout() {
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
+  const [addHabitModalVisible, setAddHabitModalVisible] = useState(false);
   const [fetchGroups, setFetchGroups] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
 
@@ -35,13 +38,19 @@ export default function TabLayout() {
   };
 
   const handleMenuOption = (option: string) => {
-    console.log(option); // Handle the selected menu option here
+    console.log(option); // Handle the selected menu option
     setMenuVisible(false); // Close the menu after selection
   };
+
   const handleAddTask = async (newTask: Task) => {
     await addTask(db, newTask);
     setAddTaskModalVisible(false);
     
+  };
+
+  const handleAddHabit = async (newHabit: any) => {
+    await addHabit(db, newHabit);
+    setAddHabitModalVisible(false);
   };
 
   return (
@@ -131,7 +140,7 @@ export default function TabLayout() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => handleMenuOption("Add Habit")}
+            onPress={() => setAddHabitModalVisible(true)}
           >
             <Text style={styles.menuText}>Add Habit</Text>
           </TouchableOpacity>
@@ -146,7 +155,16 @@ export default function TabLayout() {
           onClose={() => setAddTaskModalVisible(false)}
           onSave={(newTask) => handleAddTask(newTask)}
         />
+
+        <AddHabitBottomSheet
+          groups={groups}
+          visible={addHabitModalVisible}
+          onClose={() => setAddHabitModalVisible(false)}
+          onSave={(newHabit) => handleAddHabit(newHabit)}
+        />
       </View>
+
+
       {/* Connecting Line */}
       <View style={styles.connectorLine} />
 

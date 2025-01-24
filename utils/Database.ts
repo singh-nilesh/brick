@@ -41,7 +41,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
             interval INTEGER NOT NULL DEFAULT 1,
             by_week_day TEXT NOT NULL DEFAULT '[]',
-            by_month Integer DEFAULT 1,
             dt_start TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
             dt_end TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT23:59:59Z', 'now'))
         );
@@ -93,30 +92,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             ))?.lastInsertRowId;
 
         console.log('Group- Habits:', habit_groupId);
-
-        await db.runAsync(
-            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'Demo Grp 1',
-            'dg1',
-            '#A35C7A',
-            '#000000'
-        );
-
-        await db.runAsync(
-            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'demo 2',
-            'dg 2',
-            '#BE3144',
-            '#000000'
-        );
-        await db.runAsync(
-            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'dg3',
-            'dgp3',
-            '#FF9D23',
-            '#000000'
-        )
-
 
         // habits
         const habitId = (

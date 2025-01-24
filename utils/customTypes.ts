@@ -57,7 +57,7 @@ export interface Habit {
     createdAt: Date;
     interval: number | 1;
     byWeekDay: number[];
-    byMonth: number | 1;
     dtStart: Date;
     dtEnd: Date;
+
 }

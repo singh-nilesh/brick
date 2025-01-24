@@ -1,13 +1,13 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTask } from "./dbUtils";
 import { format, formatISO } from 'date-fns';
-import { Task } from "./customTypes";
+import { Habit, Task } from "./customTypes";
 
 
 // Add Tasks
 export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
     console.log(newTask);
-    
+
     const insertQuery = await db.prepareAsync(
         `INSERT INTO todos (group_id, title, description, comment, priority, due_at, is_task) VALUES (?, ?, ?, ?, ?, ?, ?)`);
     var TaskId: number;
@@ -197,7 +197,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
     }
 }
 
-
+// get all Group
 export const getGroups = async (db: SQLiteDatabase) => {
     const groupsQuery = await db.prepareAsync(
         `SELECT * FROM groups`
@@ -217,4 +217,27 @@ export const getGroups = async (db: SQLiteDatabase) => {
     } finally {
         await groupsQuery.finalizeAsync();
     }
-}   
+}
+
+
+// Add Habit
+export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
+    const insertQuery = await db.prepareAsync(
+        `INSERT INTO habits (group_id, title, interval, by_week_day, dt_start, dt_end) VALUES (?, ?, ?, ?, ?, ?)`);
+    var HabitId: number;
+
+    try {
+        await insertQuery.executeAsync([
+            newHabit.groupId,
+            newHabit.title,
+            newHabit.interval ?? 1,
+            JSON.stringify(newHabit.byWeekDay),
+            formatISO(newHabit.dtStart),
+            formatISO(newHabit.dtEnd),
+        ])
+        console.log('Habit added successfully');
+    }
+    finally {
+        await insertQuery.finalizeAsync();
+    }
+}
