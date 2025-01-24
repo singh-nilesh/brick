@@ -76,7 +76,7 @@ const Upcoming = () => {
                 style={styles.taskView}
                 data={tasks}
                 contentContainerStyle={{ gap: 7 }}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => (item.id.toString() + item.habit?.id.toString())}
 
                 renderItem={({ item }) =>
                     <TaskListItems

@@ -13,7 +13,7 @@ interface AddHabitBottomSheetProps {
 }
 
 const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visible, onClose, onSave}) => {
-
+    
     const HabitInit:Habit = {
         title: '',
         groupId: null,
@@ -44,6 +44,7 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
         }
         
         onSave(newHabit);
+        setNewHabit(HabitInit);
     };
 
     const handleDayToggle = (day: number) => {
@@ -80,7 +81,7 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
                 />
 
                 {/* Group Selection */}
-                <Text style={styles.label}>Group:</Text>
+                <Text style={styles.label}>Group: </Text>
                 <ScrollView horizontal style={styles.hs_Container}>
                     {groups.map((group) => (
                         <TouchableOpacity

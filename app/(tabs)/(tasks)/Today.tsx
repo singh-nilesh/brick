@@ -73,7 +73,7 @@ const Today = () => {
     <View style={styles.container}>
       <SectionList
         sections={sections}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => (item.id.toString() + item.habit?.id.toString())}
         renderSectionHeader={({ section: { title } }) => (
           <Text style={styles.sectionHeader}>{title}</Text>
         )}
