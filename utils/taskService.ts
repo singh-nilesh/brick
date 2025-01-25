@@ -43,34 +43,47 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
     }
 }
 
+
 // Generate Task Dynamically
 const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate: Date): Promise<any[]> => {
     if (Habits.length === 0) {
         return [];
     }
 
-    // Filter habits that are Due today
-    const HabitList = Habits.filter((habit) => { if ((habit.dtEnd >= dueDate) && (habit.dtStart <= dueDate)) return habit });
+    // Normalize the DueAt to the start of the day (0,0,0,0)
+    dueDate.setHours(0, 0, 0, 0);
+
 
     var taskList: any[] = [];
-    for (let habit of HabitList) {
+    for (let habit of Habits) {
+        // normalize the habit start and end date
+        habit.dtStart.setHours(0, 0, 0, 0);
+        habit.dtEnd.setHours(0, 0, 0, 0);
+
+        console.log('dueDate:', dueDate, '\n start:', habit.dtStart, '\n end:', habit.dtEnd);
         // check day of the week for the habit
         if (habit.byWeekDay.includes(dueDate.getDay())) {
 
             // compute as per interval, if the habit is due today
             let isDue: Boolean = false;
 
-            const startOfStartWeek = new Date(habit.dtStart);
-            startOfStartWeek.setDate(habit.dtStart.getDate() - habit.dtStart.getDay());
-
-            const startOfDueWeek = new Date(dueDate);
-            startOfDueWeek.setDate(dueDate.getDate() - dueDate.getDay());
-
-            const weeksSinceStart = Math.floor((startOfDueWeek.getTime() - startOfStartWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
-
-            // Check if the current week aligns with the interval
-            if (weeksSinceStart % habit.interval === 0) {
+            // if the Start date is due today
+            if (habit.dtStart.getTime() === dueDate.getTime()) {
                 isDue = true;
+            }
+            else {
+                const startOfStartWeek = new Date(habit.dtStart);
+                startOfStartWeek.setDate(habit.dtStart.getDate() - habit.dtStart.getDay());
+
+                const startOfDueWeek = new Date(dueDate);
+                startOfDueWeek.setDate(dueDate.getDate() - dueDate.getDay());
+
+                const weeksSinceStart = Math.ceil((startOfDueWeek.getTime() - startOfStartWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
+
+                // Check if the current week aligns with the interval
+                if (weeksSinceStart % habit.interval === 0) {
+                    isDue = true;
+                }
             }
 
             if (isDue) {
@@ -94,20 +107,32 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
 
         }
     }
+    console.log('Dynamic tasks:', taskList);
     return taskList;
 }
 
 // Merge tasks and dynamic tasks
-const mergeTasks = (tasks: any[], dynamicTasks: any[]): any[] => {
-    const existingHabitIds = new Set(tasks.map((task) => task.habit_id));
+const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQLiteDatabase): Promise<any[]> => {
 
-    const newTasks = dynamicTasks.filter((dynamicTask) => {
-        return dynamicTask.habit_id && !existingHabitIds.has(dynamicTask.habit_id);
-    });
-
-    console.log('New Tasks:', newTasks);
-
-    return [...tasks, ...newTasks];
+    // Insert dynamic tasks if the due date is today
+    if (dueAt.toDateString() === new Date().toDateString()) {
+        const insertStmt = await db.prepareAsync(`INSERT INTO todos (title, group_id, due_at, habit_id, is_task, created_at)
+                VALUES ( $title, $groupId, $dueAt, $habitId, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`);
+        try {
+            for (const Task of dynamicTasks) {
+                await insertStmt.executeAsync({
+                    $title: Task.title,
+                    $groupId: Task.group_id,
+                    $dueAt: dueAt.toISOString(),
+                    $habitId: Task.habit_id,
+                });
+            }
+        }
+        finally {
+            await insertStmt.finalizeAsync();
+        }
+    }
+    return [...tasks, ...dynamicTasks];
 };
 
 // Get Tasks
@@ -130,7 +155,6 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
             await todoQuery.finalizeAsync();
         }
 
-
         // Fetch All habits
         let dynamicTasks;
         let habitRows
@@ -139,18 +163,32 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
         try {
             const habits = await habitQuery.executeAsync();
             habitRows = await habits.getAllAsync();
-            dynamicTasks = await generateDynamicTasks(db, habitRows.map(mapDBToHabit), dueDate);
+
+            // Filter habits that are Due today
+            const HabitList = habitRows.map(mapDBToHabit).filter((habit) => {
+                if ((habit.dtEnd >= dueDate) &&
+                    (habit.dtStart <= dueDate) &&
+                    (habit.id && !tasks.some((task: any) => task.habit_id === habit.id))
+                ) return habit
+            });
+            if (HabitList.length > 0) {
+                dynamicTasks = await generateDynamicTasks(db, HabitList, dueDate);
+            }
+            else {
+                dynamicTasks = null;
+            }
+
         } finally {
             await habitQuery.finalizeAsync();
         }
 
         // Merge the static and dynamic tasks
-        const todoResult = mergeTasks(tasks, dynamicTasks);
-
+        var todoResult;
+        dynamicTasks ? todoResult = mergeTasks(tasks, dynamicTasks, dueDate, db) : todoResult = tasks;
 
         // Fetch task details
         const taskDetails = await Promise.all(
-            todoResult.map(async (row: any) => {
+            (await todoResult).map(async (row: any) => {
                 let group = null;
                 let habit = null;
                 let references = null;

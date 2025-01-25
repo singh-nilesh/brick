@@ -12,9 +12,9 @@ interface AddHabitBottomSheetProps {
     onSave: (habit: any) => void;
 }
 
-const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visible, onClose, onSave}) => {
-    
-    const HabitInit:Habit = {
+const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visible, onClose, onSave }) => {
+
+    const HabitInit: Habit = {
         title: '',
         groupId: null,
         interval: 1,
@@ -42,7 +42,7 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
             alert('Select at least one day of the week');
             return;
         }
-        
+
         onSave(newHabit);
         setNewHabit(HabitInit);
     };
@@ -82,30 +82,32 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
 
                 {/* Group Selection */}
                 <Text style={styles.label}>Group: </Text>
-                <ScrollView horizontal style={styles.hs_Container}>
-                    {groups.map((group) => (
-                        <TouchableOpacity
-                            key={group.id}
-                            style={[
-                                styles.hs_Button,
-                                group.id === newHabit.groupId && styles.hs_selectedButton,
-                            ]}
-                            onPress={() => setNewHabit((prev) => ({ ...prev, groupId: group.id }))}
-                        >
-                            <Text style={styles.hs_ButtonText}>{group.title}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                <View style={styles.hs_Container}>
+                    <ScrollView horizontal={true}>
+                        {groups.map((group) => (
+                            <TouchableOpacity
+                                key={group.id}
+                                style={[
+                                    styles.hs_Button,
+                                    group.id === newHabit.groupId && styles.hs_selectedButton,
+                                ]}
+                                onPress={() => setNewHabit((prev) => ({ ...prev, groupId: group.id }))}
+                            >
+                                <Text style={styles.hs_ButtonText}>{group.title}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
 
                 {/* Interval */}
                 <Text style={styles.label}>Interval:</Text>
                 <TextInput
                     style={styles.input}
                     keyboardType="numeric"
-                    placeholder="Interval (1 or higher)"
+                    placeholder="no. of Weeks to skip, between Habit weeks"
                     value={newHabit.interval ? newHabit.interval.toString() : ''}
                     onChangeText={(text) =>
-                        setNewHabit((prev) => ({ ...prev, interval: parseInt(text)}))
+                        setNewHabit((prev) => ({ ...prev, interval: parseInt(text) }))
                     }
                 />
 
@@ -186,7 +188,7 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
                         onClose();
                         setNewHabit(HabitInit);
                     }} />
-                    
+
                     {renderHabits()}
 
                 </KeyboardAvoidingView>
@@ -234,20 +236,20 @@ const styles = StyleSheet.create({
     hs_Container: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginBottom: 20,
+        marginBottom: 20
     },
     hs_Button: {
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 5,
         padding: 7,
-        margin: 5,
+        marginHorizontal: 5,
     },
     hs_selectedButton: {
         backgroundColor: '#ddd',
     },
     hs_ButtonText: {
-        fontSize: 14,
+        fontSize: 16,
     },
     dateButton: {
         padding: 10,
