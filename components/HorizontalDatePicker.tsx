@@ -8,7 +8,7 @@ import { eachWeekOfInterval, subDays, addDays, eachDayOfInterval, format, isSame
 const dates = eachWeekOfInterval(
   {
     start: subDays(new Date(), 16),
-    end: addDays(new Date(), 14),
+    end: addDays(new Date(), 34),
   },
   { weekStartsOn: 0 }
 ).reduce((acc: Date[][], cur) => {

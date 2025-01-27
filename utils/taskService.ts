@@ -60,7 +60,6 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
         habit.dtStart.setHours(0, 0, 0, 0);
         habit.dtEnd.setHours(0, 0, 0, 0);
 
-        console.log('dueDate:', dueDate, '\n start:', habit.dtStart, '\n end:', habit.dtEnd);
         // check day of the week for the habit
         if (habit.byWeekDay.includes(dueDate.getDay())) {
 
@@ -70,6 +69,8 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
             // if the Start date is due today
             if (habit.dtStart.getTime() === dueDate.getTime()) {
                 isDue = true;
+
+                console.log('StartDate if-statement:', habit.dtStart, '\n DueDate if-statement:', dueDate);
             }
             else {
                 const startOfStartWeek = new Date(habit.dtStart);
@@ -77,6 +78,8 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
 
                 const startOfDueWeek = new Date(dueDate);
                 startOfDueWeek.setDate(dueDate.getDate() - dueDate.getDay());
+
+                console.log('startOfStartWeek else:', startOfStartWeek, '\n startOfDueWeek else:', startOfDueWeek);
 
                 const weeksSinceStart = Math.ceil((startOfDueWeek.getTime() - startOfStartWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
 
@@ -107,7 +110,6 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
 
         }
     }
-    console.log('Dynamic tasks:', taskList);
     return taskList;
 }
 
@@ -137,7 +139,10 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
-    const formattedDate = format(dueDate, 'yyyy-MM-dd');
+    const formattedDate = format(formatISO(dueDate), 'yyyy-MM-dd');
+    console.log('Due Date:', formatISO(dueDate));
+    console.log('formatted Due Date:', formattedDate);
+
 
     try {
         // Fetch all tasks for the given date
