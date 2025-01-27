@@ -1,6 +1,6 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTodo } from "./dbUtils";
-import { format, formatISO } from 'date-fns';
+import { formatDateForDB } from "./dbUtils";
 
 // Add a Todo
 export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<void> => {
@@ -51,7 +51,7 @@ export const markDeleted = async (db: SQLiteDatabase, id: number): Promise<void>
     );
     try {
         await statement.executeAsync({
-            $deletedAt: formatISO(new Date()),
+            $deletedAt: formatDateForDB(new Date()),
             $id: id,
         });
     } finally {
@@ -67,7 +67,7 @@ export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> 
     );
     try {
         await statement.executeAsync({
-            $completedAt: formatISO(new Date()),
+            $completedAt: formatDateForDB(new Date()),
             $id: id,
         });
     } finally {

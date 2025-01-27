@@ -19,6 +19,7 @@ export interface Task {
     priority: number;
     createdAt?: Date | null;
     dueAt?: Date | null;
+    dueAtTime?: string | null;
     completedAt?: Date | null;
     isDeleted: boolean;
     deletedAt?: Date | null;

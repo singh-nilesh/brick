@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native'
+import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-expo';
 import { Todo } from '@/utils/customTypes';
@@ -69,6 +69,10 @@ const TodoScreen = () => {
                 ListFooterComponent={() =>
                     <FooterTaskInput
                         onAdd={(newTodo: string) => handleAddTodo(newTodo)} />}
+
+                refreshControl={
+                    <RefreshControl refreshing={false} onRefresh={() => setRefreshDB(!refreshDB)} />
+                }
             />
         </View>
     )

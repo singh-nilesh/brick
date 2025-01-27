@@ -1,15 +1,14 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToHabit, mapDBToTask } from "./dbUtils";
-import { format, formatISO } from 'date-fns';
+import { formatDateForDB } from "./dbUtils";
 import { Habit, Task } from "./customTypes";
 
 
 // Add Tasks
 export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
-    console.log(newTask);
 
     const insertQuery = await db.prepareAsync(
-        `INSERT INTO todos (group_id, title, description, comment, priority, due_at, is_task) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+        `INSERT INTO todos (group_id, title, description, comment, priority, due_at, due_at_time, is_task) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
     var TaskId: number;
 
     try {
@@ -20,7 +19,8 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
                 newTask.description ?? '',
                 newTask.comment ?? '',
                 newTask.priority ?? 5,
-                newTask.dueAt ? formatISO(newTask.dueAt) : null,
+                newTask.dueAt ? formatDateForDB(newTask.dueAt) : null,
+                newTask.dueAtTime ?? null,
                 1,
             ]))?.lastInsertRowId;
     }
@@ -50,27 +50,18 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
         return [];
     }
 
-    // Normalize the DueAt to the start of the day (0,0,0,0)
-    dueDate.setHours(0, 0, 0, 0);
-
-
     var taskList: any[] = [];
+
     for (let habit of Habits) {
-        // normalize the habit start and end date
-        habit.dtStart.setHours(0, 0, 0, 0);
-        habit.dtEnd.setHours(0, 0, 0, 0);
 
         // check day of the week for the habit
         if (habit.byWeekDay.includes(dueDate.getDay())) {
 
-            // compute as per interval, if the habit is due today
             let isDue: Boolean = false;
 
             // if the Start date is due today
-            if (habit.dtStart.getTime() === dueDate.getTime()) {
+            if (habit.dtStart.getTime() === new Date(dueDate.setHours(0, 0, 0, 0)).getTime()) {
                 isDue = true;
-
-                console.log('StartDate if-statement:', habit.dtStart, '\n DueDate if-statement:', dueDate);
             }
             else {
                 const startOfStartWeek = new Date(habit.dtStart);
@@ -78,8 +69,6 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
 
                 const startOfDueWeek = new Date(dueDate);
                 startOfDueWeek.setDate(dueDate.getDate() - dueDate.getDay());
-
-                console.log('startOfStartWeek else:', startOfStartWeek, '\n startOfDueWeek else:', startOfDueWeek);
 
                 const weeksSinceStart = Math.ceil((startOfDueWeek.getTime() - startOfStartWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
 
@@ -98,8 +87,8 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
                     comment: '',
                     status: 0,
                     priority: 5,
-                    created_at: formatISO(new Date()),
-                    due_at: formatISO(dueDate),
+                    created_at: formatDateForDB(new Date()),
+                    due_at: formatDateForDB(dueDate),
                     completed_at: null,
                     is_deleted: 0,
                     deleted_at: null,
@@ -107,7 +96,6 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
                     habit_id: habit.id,
                 });
             }
-
         }
     }
     return taskList;
@@ -115,6 +103,8 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
 
 // Merge tasks and dynamic tasks
 const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQLiteDatabase): Promise<any[]> => {
+
+    dueAt.setHours(0, 0, 0, 0);
 
     // Insert dynamic tasks if the due date is today
     if (dueAt.toDateString() === new Date().toDateString()) {
@@ -125,7 +115,7 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
                 await insertStmt.executeAsync({
                     $title: Task.title,
                     $groupId: Task.group_id,
-                    $dueAt: dueAt.toISOString(),
+                    $dueAt: formatDateForDB(dueAt),
                     $habitId: Task.habit_id,
                 });
             }
@@ -139,10 +129,7 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
-    const formattedDate = format(formatISO(dueDate), 'yyyy-MM-dd');
-    console.log('Due Date:', formatISO(dueDate));
-    console.log('formatted Due Date:', formattedDate);
-
+    const formattedDate = formatDateForDB(dueDate);
 
     try {
         // Fetch all tasks for the given date
@@ -278,7 +265,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
                 newTask.title ?? '',
                 newTask.status ? 1 : 0,
                 newTask.description ?? '',
-                newTask.dueAt ? formatISO(newTask.dueAt) : null,
+                newTask.dueAt ? formatDateForDB(newTask.dueAt) : null,
                 newTask.comment ?? '',
                 oldTask.id,
             ]);
@@ -355,8 +342,8 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
             newHabit.title,
             newHabit.interval ?? 1,
             JSON.stringify(newHabit.byWeekDay),
-            formatISO(newHabit.dtStart),
-            formatISO(newHabit.dtEnd),
+            formatDateForDB(newHabit.dtStart),
+            formatDateForDB(newHabit.dtEnd),
         ])
         console.log('Habit added successfully');
     }

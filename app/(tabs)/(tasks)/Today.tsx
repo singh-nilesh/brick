@@ -7,6 +7,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import { getTasksForDate} from '@/utils/taskService';
 import { markDeleted } from '@/utils/todoService';
+import { RefreshControl } from 'react-native';
 
 const Today = () => {
   const db = useSQLiteContext();
@@ -97,6 +98,10 @@ const Today = () => {
           ) : (
             <View style={{ height: 50 }} />
           )
+        }
+
+        refreshControl={
+          <RefreshControl refreshing={false} onRefresh={() => setRefreshDB(!refreshDB)} />
         }
       />
       <TaskBottomSheet
