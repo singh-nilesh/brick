@@ -2,10 +2,10 @@ import { Stack } from "expo-router";
 
 export default function ProgressLayout() {
   return (
-    <Stack>
+    <Stack >
       <Stack.Screen
         name="Progress"
-        options={{ title: "Progress", headerShown: true }}
+        options={{ title: "Progress", headerShown: false }}
       />
       
     </Stack>

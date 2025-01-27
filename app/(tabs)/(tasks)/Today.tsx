@@ -2,10 +2,10 @@ import { View, Text, SectionList, StyleSheet } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
-import TaskBottomSheet from '@/components/EditTaskBottomSheet';
+import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
-import { getTasksForDate} from '@/utils/taskService';
+import { getTasksForDate, updateTask } from '@/utils/taskService';
 import { markDeleted } from '@/utils/todoService';
 import { RefreshControl } from 'react-native';
 
@@ -67,9 +67,10 @@ const Today = () => {
   const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
     if (!oldTask || !newTask) return;
     closeModal();
-    console.log('Updating Task');
+    await updateTask(db, oldTask, newTask);
+    setRefreshDB(!refreshDB);
   }
-  
+
   return (
     <View style={styles.container}>
       <SectionList
@@ -104,11 +105,11 @@ const Today = () => {
           <RefreshControl refreshing={false} onRefresh={() => setRefreshDB(!refreshDB)} />
         }
       />
-      <TaskBottomSheet
+      <EditTaskBottomSheet
         task={selectedTask}
         visible={showTaskBottomSheet}
         onClose={closeModal}
-        onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask) }/>
+        onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask)} />
     </View>
   );
 };
