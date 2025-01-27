@@ -29,7 +29,7 @@ interface HorizontalDatePickerProps {
 
 
 // main component
-export default function HorizontalSwiper({
+export default function HorizontalDatePicker({
   selectedDate,
   setSelectedDate,
 }: HorizontalDatePickerProps) {
@@ -46,15 +46,15 @@ export default function HorizontalSwiper({
       >
         {dates.map((week, i) => (
           <View key={i} style={styles.weekContainer}>
-            {week.map((day, j) => {
-              const isSelected = isSameDay(day, selectedDate);
-              const isToday = isSameDay(day, new Date());
+            {week.map((dateRef, j) => {
+              const isSelected = isSameDay(dateRef, selectedDate);
+              const isToday = isSameDay(dateRef, new Date());
 
               return (
                 <TouchableOpacity
                   key={j}
                   style={[styles.dayContainer, isSelected && styles.selectedDate]}
-                  onPress={() => setSelectedDate(day)}
+                  onPress={() => setSelectedDate(dateRef)}
                 >
                   <Text
                     style={[
@@ -62,7 +62,7 @@ export default function HorizontalSwiper({
                       isToday && !isSelected && styles.todayText,
                     ]}
                   >
-                    {format(day, 'EE')}
+                    {format(dateRef, 'EE')}
                   </Text>
                   <Text
                     style={[
@@ -71,7 +71,7 @@ export default function HorizontalSwiper({
                       isToday && styles.todayText,
                     ]}
                   >
-                    {day.getDate()}
+                    {dateRef.getDate()}
                   </Text>
                 </TouchableOpacity>
               );

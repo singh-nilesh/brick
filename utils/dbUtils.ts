@@ -1,13 +1,13 @@
-import { formatISO, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { Habit, Task, Todo } from './customTypes';
 
 // Define the date format utility
-function formatDateForDB(date: Date | null): string | null {
-    return date ? formatISO(date) : null;
+export function formatDateForDB(date: Date | null): string | null {
+    return date ? format(date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
 }
 
-function parseDateFromDB(date: string | null): Date | null {
-    return date ? parseISO(date) : null;
+export function parseDateFromDB(date: string | null): Date | null {
+    return date ? new Date(date) : null;
 }
 
 // Define a function to map a database row to the Task object
@@ -34,11 +34,12 @@ export const mapDBToTask = (dbRow: any): Task => {
         comment: dbRow.comment || null,
         status: !!dbRow.status,
         priority: dbRow.priority,
-        createdAt: dbRow.created_at ? new Date(dbRow.created_at) : null,
-        dueAt: dbRow.due_at ? new Date(dbRow.due_at) : null,
-        completedAt: dbRow.completed_at ? new Date(dbRow.completed_at) : null,
-        isDeleted: dbRow.is_deleted === 1, // Convert integer to boolean
-        deletedAt: dbRow.deleted_at ? new Date(dbRow.deleted_at) : null,
+        createdAt: dbRow.created_at ? parseDateFromDB(dbRow.created_at) : null,
+        dueAt: dbRow.due_at ? parseDateFromDB(dbRow.due_at) : null,
+        completedAt: dbRow.completed_at ? parseDateFromDB(dbRow.completed_at) : null,
+        isDeleted: dbRow.is_deleted === 1,
+        deletedAt: dbRow.deleted_at ? parseDateFromDB(dbRow.deleted_at) : null,
+        dueAtTime: dbRow.due_at_time ? dbRow.due_at_time : null,
         group: dbRow.group
             ? {
                   id: dbRow.group_id,
@@ -64,10 +65,10 @@ export const mapDBToHabit = (dbRow: any): Habit => {
         id: dbRow.id,
         title: dbRow.title,
         groupId: dbRow.group_id,
-        createdAt: parseISO(dbRow.created_at),
+        createdAt: parseDateFromDB(dbRow.created_at) as Date,
         interval: dbRow.interval,
         byWeekDay: JSON.parse(dbRow.by_week_day),
-        dtStart: parseISO(dbRow.dt_start),
-        dtEnd: parseISO(dbRow.dt_end),
+        dtStart: parseDateFromDB(dbRow.dt_start) as Date,
+        dtEnd: parseDateFromDB(dbRow.dt_end) as Date,
     };
 };

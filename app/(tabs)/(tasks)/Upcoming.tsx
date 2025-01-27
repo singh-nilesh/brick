@@ -1,4 +1,4 @@
-import { View, StyleSheet, FlatList } from 'react-native'
+import { View, StyleSheet, FlatList, RefreshControl } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import HorizontalDatePicker from '@/components/HorizontalDatePicker'
 import HeaderDatePicker from '@/components/HeaderDatePicker';
@@ -89,7 +89,11 @@ const Upcoming = () => {
                         onTaskPress={() => openModal(item)}
                     />
                 }
-                ListFooterComponent={<View style={{height:100}} />}
+                ListFooterComponent={<View style={{ height: 100 }} />}
+
+                refreshControl={
+                    <RefreshControl refreshing={false} onRefresh={() => setRefreshDB(!refreshDB)} />
+                }
             />
 
             <EditTaskBottomSheet

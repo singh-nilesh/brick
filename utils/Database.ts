@@ -1,7 +1,6 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import * as FileSystem from 'expo-file-system';
-import { format, formatISO } from "date-fns";
-
+import { formatDateForDB } from "./dbUtils"; 
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
@@ -38,11 +37,11 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             id INTEGER PRIMARY KEY,
             title TEXT NOT NULL,
             group_id INTEGER REFERENCES groups(id),
-            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+            created_at TEXT NOT NULL DEFAULT (DATE('now')),
             interval INTEGER NOT NULL DEFAULT 1,
             by_week_day TEXT NOT NULL DEFAULT '[]',
-            dt_start TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-            dt_end TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT23:59:59Z', 'now'))
+            dt_start TEXT NOT NULL DEFAULT (DATE('now')),
+            dt_end TEXT NOT NULL DEFAULT (DATE('now'))
         );
 
 
@@ -54,8 +53,9 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             comment TEXT,
             status INTEGER NOT NULL DEFAULT 0,
             priority INTEGER NOT NULL DEFAULT 5 CHECK(priority BETWEEN 1 AND 5),
-            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+            created_at TEXT NOT NULL DEFAULT (DATE('now')),
             due_at TEXT,
+            due_at_time TEXT,
             completed_at TEXT,
             is_deleted INTEGER NOT NULL DEFAULT 0,
             deleted_at TEXT,
@@ -68,7 +68,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
            task_id INTEGER NOT NULL REFERENCES todos(id),
            name TEXT NOT NULL,      
            url TEXT NOT NULL,
-           created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+           created_at TEXT NOT NULL DEFAULT (DATE('now'))
         );
 
         CREATE INDEX IF NOT EXISTS idx_todos_due_at ON todos(due_at);
@@ -101,8 +101,8 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
                 habit_groupId,                // group_id: habits
                 1,                      // interval: 1
                 '[0,1,2,3,4,5,6]',      // by_day: empty array
-                formatISO(new Date()),  // dt_start: current timestamp
-                formatISO(new Date())   // dt_end: current timestamp
+                formatDateForDB(new Date()),  // dt_start: current timestamp
+                formatDateForDB(new Date())   // dt_end: current timestamp
             ))?.lastInsertRowId;
 
 
@@ -120,7 +120,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
                 todoId, // Foreign key linking to the todos table
                 'User Guide', // name
                 'https://docs.google.com/document/d/1d_TmPfLqCtashhviQN4AeTY6XV1kZyN4byTbltac-q4/edit?usp=sharing',
-                formatISO(new Date()) // created_at: current timestamp
+                formatDateForDB(new Date())
             );
         }
 
@@ -131,7 +131,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
                 'INSERT INTO todos (group_id, title, due_at, is_task, habit_id) VALUES (?, ?, ?, ?, ?)',
                 habit_groupId, //groups habits
                 'Daily habits', // title
-                formatISO(new Date()), // due_at: current timestamp
+                formatDateForDB(new Date()), // due_at
                 1, // task
                 habitId // Foreign key linking to the habits table
             );
