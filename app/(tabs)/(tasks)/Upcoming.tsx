@@ -9,6 +9,7 @@ import { Task } from '@/utils/customTypes';
 import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
 import { getTasksForDate, updateTask } from '@/utils/taskService';
 import { markDeleted } from '@/utils/todoService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const Upcoming = () => {
@@ -39,7 +40,7 @@ const Upcoming = () => {
         await markDeleted(db, id);
         setRefreshDB(!refreshDB);
     };
-    
+
     // Open Task details
     const openModal = (item: Task) => {
         setSelectedTask(item);
@@ -53,12 +54,12 @@ const Upcoming = () => {
     }
 
     // Update Task
-    const handelUpdateTask = async (oldTask:Task, newTask:Task) => {
+    const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
         if (!oldTask || !newTask) return;
         closeModal();
         await updateTask(db, oldTask, newTask);
         setRefreshDB(!refreshDB);
-    }       
+    }
 
     return (
         <View style={styles.container}>
@@ -73,10 +74,11 @@ const Upcoming = () => {
             />
 
             <FlatList
+                scrollEnabled={true}
                 style={styles.taskView}
                 data={tasks}
                 contentContainerStyle={{ gap: 7 }}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => (item.id.toString() + item.habit?.id.toString())}
 
                 renderItem={({ item }) =>
                     <TaskListItems
@@ -87,6 +89,7 @@ const Upcoming = () => {
                         onTaskPress={() => openModal(item)}
                     />
                 }
+                ListFooterComponent={<View style={{height:100}} />}
             />
 
             <EditTaskBottomSheet
@@ -94,7 +97,7 @@ const Upcoming = () => {
                 visible={showTaskBottomSheet}
                 onClose={closeModal}
                 onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask)}
-                />
+            />
         </View>
     )
 }
@@ -107,6 +110,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#white',
     },
     taskView: {
+        flex: 1,
         backgroundColor: 'white',
     },
     taskContainer: {

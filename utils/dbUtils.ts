@@ -1,5 +1,5 @@
 import { formatISO, parseISO } from 'date-fns';
-import { Task, Todo } from './customTypes';
+import { Habit, Task, Todo } from './customTypes';
 
 // Define the date format utility
 function formatDateForDB(date: Date | null): string | null {
@@ -57,3 +57,17 @@ export const mapDBToTask = (dbRow: any): Task => {
     };
 };
 
+
+// map Habits, dbToObj
+export const mapDBToHabit = (dbRow: any): Habit => {
+    return {
+        id: dbRow.id,
+        title: dbRow.title,
+        groupId: dbRow.group_id,
+        createdAt: parseISO(dbRow.created_at),
+        interval: dbRow.interval,
+        byWeekDay: JSON.parse(dbRow.by_week_day),
+        dtStart: parseISO(dbRow.dt_start),
+        dtEnd: parseISO(dbRow.dt_end),
+    };
+};
