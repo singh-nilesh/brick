@@ -1,7 +1,7 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToHabit, mapDBToTask } from "./dbUtils";
 import { formatDateForDB } from "./dbUtils";
-import { Habit, Task } from "./customTypes";
+import { Group, Habit, Task } from "./customTypes";
 
 
 // Add Tasks
@@ -241,6 +241,58 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
         throw error;
     }
 };
+
+
+
+// get task by group
+export const getTasksByGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
+    const todoQuery = await db.prepareAsync(
+        `SELECT * FROM todos WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
+    );
+    try {
+        const todoRows = await todoQuery.executeAsync({ $groupId: selectedGroup.id });
+        const taskDetails = await Promise.all(
+            (await todoRows.getAllAsync()).map(async (row: any) => {
+                let group = selectedGroup;
+                let habit = null;
+                let references = null;
+
+                // Fetch references
+                const refQuery = await db.prepareAsync(
+                    `SELECT id,name,url FROM reference WHERE task_id = $todoId;`
+                );
+                try {
+                    const refRows = await refQuery.executeAsync({ $todoId: row.id });
+                    references = (await refRows.getAllAsync()).map((ref: any) => ({
+                        id: ref.id,
+                        name: ref.name,
+                        url: ref.url,
+                    }));
+                } finally {
+                    await refQuery.finalizeAsync();
+                }
+
+                const data = {
+                    ...row,
+                    group: group ? group : null,
+                    habit: habit ? habit : null,
+                    references,
+                };
+                //console.log(data);
+                return data;
+            })
+        );
+
+        // return mapped task.
+        return taskDetails.map(mapDBToTask);
+    } catch (error) {
+        console.error("Error fetching tasks:", error);
+        throw error;
+    }
+    finally {
+        await todoQuery.finalizeAsync();
+    }
+}
 
 // Update Task
 export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Task) => {
