@@ -1,19 +1,44 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, ActivityIndicator } from "react-native";
 import WebView from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import WebViewContainer from "@/components/WebViewContainer";
+import { useSQLiteContext } from "expo-sqlite";
+import { getRefLinks } from "@/utils/taskService";
+import { useFocusEffect } from "expo-router";
 
+interface RefLinkProps {
+    task_id: number,
+    task_title: string,
+    ref_name: string,
+    ref_url: string
+}
 
 const WebFeeds = () => {
     const [currentUrl, setCurrentUrl] = useState("https://www.google.com");
     const webViewRef = useRef<WebView>(null);
+
+    const [refList, setRefList] = useState<RefLinkProps[]>([]);
     const [canGoBack, setCanGoBack] = useState(false);
     const [canGoForward, setCanGoForward] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+    const db = useSQLiteContext();
+
+    // Fetch refs for the database
+    const fetchRefs = async () => {
+        const refs = await getRefLinks(db, new Date(), new Date(Date.now() + 5 * 24 * 60 * 60 * 1000));
+        setRefList(refs);
+    };
+
+    // Hook to fetch refs from the database on page load
+    useFocusEffect(
+        useCallback(() => {
+            fetchRefs();
+        }, [db])
+    );
+
 
     const handleGo = (url: string) => {
-
         if (url.startsWith("http")) {
             setCurrentUrl(url);
         } else {
@@ -104,20 +129,21 @@ const WebFeeds = () => {
                     <View style={styles.drawerContent}>
                         <Text style={styles.drawerTitle}>Select a Website</Text>
                         <FlatList
-                            data={titles}
-                            keyExtractor={(item) => item.id}
+                            data={refList}
+                            keyExtractor={(item) => item.task_id.toString()}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={[styles.drawerItem,
-                                    currentUrl === item.url && { backgroundColor: "black" },
+                                    currentUrl === item.ref_url && { backgroundColor: "black" },
                                     ]}
                                     onPress={() => {
-                                        handleGo(item.url);
+                                        handleGo(item.ref_url);
                                     }}
                                 >
-                                    <Text style={[styles.drawerItemText,
-                                    currentUrl === item.url && { color: "white" },
-                                    ]}>{item.title}</Text>
+                                    <Text style={[styles.drawerItemText, currentUrl === item.ref_url && { color: "white" }]}>
+                                        {item.ref_name}
+                                    </Text>
+                                    <Text style={{fontSize:12, color:"grey", paddingLeft:20}}>{item.task_title}</Text>
                                 </TouchableOpacity>
                             )}
                         />
@@ -174,12 +200,13 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     drawerItem: {
-        padding: 12,
+        padding: 5,
         borderRadius: 8,
         borderBottomWidth: 1,
         borderBottomColor: "#ddd",
     },
     drawerItemText: {
         fontSize: 16,
+        paddingLeft: 10,
     },
 });
