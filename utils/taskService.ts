@@ -403,3 +403,32 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
         await insertQuery.finalizeAsync();
     }
 }
+
+export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
+    const dt_from = formatDateForDB(from);
+    const dt_to = formatDateForDB(to);
+    
+    const refQuery = await db.prepareAsync(
+        `SELECT
+        todos.id AS task_id,
+        todos.title AS task_title,
+        reference.name AS ref_name,
+        reference.url AS ref_url
+        FROM reference
+        INNER JOIN todos ON reference.task_id = todos.id
+        WHERE todos.due_at BETWEEN $dt_from AND $dt_to
+        ORDER BY todos.due_at`
+    );
+    try {
+        const refRows = await refQuery.executeAsync({ $dt_from: dt_from, $dt_to: dt_to });
+        const refLinks = await refRows.getAllAsync();
+        return refLinks.map((ref: any) => ({
+            task_id: ref.task_id as number,
+            task_title: ref.task_title as string,
+            ref_name: ref.ref_name as string,
+            ref_url: ref.ref_url as string,
+            }));
+    } finally {
+        await refQuery.finalizeAsync();
+    }
+}

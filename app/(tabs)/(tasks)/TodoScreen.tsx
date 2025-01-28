@@ -1,5 +1,5 @@
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import { View, FlatList, StyleSheet, RefreshControl } from 'react-native'
+import React, { useCallback, useState } from 'react'
 import { useUser } from '@clerk/clerk-expo';
 import { Todo } from '@/utils/customTypes';
 import TodoListItems from '@/components/TodoListItems';

@@ -179,9 +179,8 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBarStyle: {
-    paddingTop: 7,
     position: "absolute",
-    bottom: 20,
+    bottom: 15,
     start: 20,
     height: 55,
     width: "55%",
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
     borderStartEndRadius: 50,
     borderStartStartRadius: 50,
     position: "absolute",
-    bottom: 20,
+    bottom: 17,
     right: 20,
   },
 
@@ -211,14 +210,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "23%",
     start: "59%",
-    bottom: 37,
+    bottom: 32,
     height: 20,
     backgroundColor: "#f0f0f0", // Line color
   },
 
   tabIconWrapper: {
     width: 55,
-    height: 48, // Reduced height for less bottom padding
+    height: 40, // Reduced height for less bottom padding
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 30,

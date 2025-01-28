@@ -1,5 +1,5 @@
 import { View, Text, SectionList, StyleSheet } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Task } from '@/utils/customTypes';
 import TaskListItems from '@/components/TaskListItems';
 import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
