@@ -432,3 +432,51 @@ export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
         await refQuery.finalizeAsync();
     }
 }
+
+
+// get All group details, habits and tasks
+export const getGroupOverview = async (db: SQLiteDatabase) => {
+
+    // LEFT join + WHERE  ==> INNER JOIN, (use AND instead of WHERE)
+    const groupsQuery = await db.prepareAsync(
+        `SELECT
+            groups.id AS group_id,
+            groups.title AS group_title,
+            groups.description AS group_description,
+            groups.group_bgColor AS group_bgColor,
+            COUNT(todos.id) AS task_count,
+            COUNT(todos.completed_at) AS completed_count
+        FROM groups
+        LEFT JOIN todos ON groups.id = todos.group_id 
+            AND todos.is_task = 1 
+            AND todos.is_deleted = 0 
+            AND todos.habit_id IS NULL
+        GROUP BY groups.id`
+    );
+
+    const habitsQuery = await db.prepareAsync(`SELECT count(id) AS habit_count FROM habits WHERE group_id = $groupId`);
+    try {
+        const groupsRows = await groupsQuery.executeAsync();
+        const groups = await groupsRows.getAllAsync();
+        let result = groups.map((group: any) => ({
+            id: group.group_id,
+            title: group.group_title,
+            description: group.group_description,
+            bgColor: group.group_bgColor,
+            taskCount: group.task_count,
+            completedTask: group.completed_count,
+            habitCount: 0,
+        }));
+
+        for (let group of result) {
+            const habitRows = await habitsQuery.executeAsync({ $groupId: group.id });
+            const habits = await habitRows.getFirstAsync();
+            group.habitCount = (habits as { habit_count: number }).habit_count;
+        }
+
+        return result;
+    } finally {
+        await habitsQuery.finalizeAsync();
+        await groupsQuery.finalizeAsync();
+    }
+}

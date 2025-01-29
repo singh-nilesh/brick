@@ -37,11 +37,8 @@ const TasksLayout = () => {
             <Text style={{ color: 'grey', fontSize: 20 }}>  {todayDay}</Text>
           </Text>
 
-          <TouchableOpacity
-            onPress={() => router.push('/Profile')}>
-            <FontAwesome6 name="user-astronaut" size={30} color="black" />
-          </TouchableOpacity>
-          {/*<EvilIcons name="user" size={40} color="black"> */}
+          <FontAwesome6 name="user-astronaut" size={30} color="black" onPress={() => router.push('/Profile')} />
+          {/*<EvilIcons name="user" size={50} color="black" onPress={() => router.push('/Profile')} /> */}
 
         </View>
       )}

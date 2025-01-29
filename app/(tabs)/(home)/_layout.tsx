@@ -13,6 +13,7 @@ const TabsLayout = () => {
 
       {/* Profile Screen */}
       <Stack.Screen name="Profile"/>
+      <Stack.Screen name="GroupOverview"/>
     </Stack>
   );
 };

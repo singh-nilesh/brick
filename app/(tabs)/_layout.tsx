@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Foundation from '@expo/vector-icons/Foundation';
 import { Tabs } from "expo-router";
-import { View, TouchableOpacity, StyleSheet, Text, KeyboardAvoidingView, TouchableWithoutFeedback } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
@@ -11,7 +11,7 @@ import AddTaskBottomSheet from "@/components/AddTaskBottomSheet";
 import { Group, Task } from "@/utils/customTypes";
 import { addHabit, addTask, getGroups } from "@/utils/taskService";
 import AddHabitBottomSheet from "@/components/AddHabitBotomSheet";
-
+import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 
 export default function TabLayout() {
 
@@ -38,8 +38,8 @@ export default function TabLayout() {
   };
 
   const handleMenuOption = (option: string) => {
-    console.log(option); // Handle the selected menu option
-    setMenuVisible(false); // Close the menu after selection
+    console.log(option);
+    setMenuVisible(false); // Close the menu
   };
 
   const handleAddTask = async (newTask: Task) => {
@@ -51,6 +51,12 @@ export default function TabLayout() {
   const handleAddHabit = async (newHabit: any) => {
     await addHabit(db, newHabit);
     setAddHabitModalVisible(false);
+  };
+
+  const getRoutName = (route: any) => {
+    const routeName = getFocusedRouteNameFromRoute(route);
+    console.log(routeName);
+    return routeName;
   };
 
   return (
