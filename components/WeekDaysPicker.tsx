@@ -1,15 +1,11 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import React from 'react';
+import { Habit } from '@/utils/customTypes';
 
-interface habitProps {
-    title: string;
-    weekDates: number[];
-    referenceLink: string | null;
-}
 
 interface WeekDaysPickerProps {
-    habitObj: habitProps ;
-    onDayChange: (newHabit: habitProps ) => void;
+    habitObj: Habit ;
+    onDayChange: (newWeekDays: number[]) => void;
 }
 
 const daysOfWeek = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -18,19 +14,14 @@ const WeekDaysPicker = ({ habitObj, onDayChange }: WeekDaysPickerProps) => {
 
     // Handle the day change
     const handleDayChange = (day: number) => {
-        const updatedWeekDates = habitObj.weekDates.includes(day)
-            ? habitObj.weekDates.filter((d) => d !== day) // Remove the selected day
-            : [...habitObj.weekDates, day]; // Add the selected day
+        const updatedWeekDates = habitObj.byWeekDay.includes(day)
+            ? habitObj.byWeekDay.filter((d) => d !== day) // Remove the selected day
+            : [...habitObj.byWeekDay, day]; // Add the selected day
 
         // Sort the updated week dates
         updatedWeekDates.sort((a, b) => a - b);
-
-        const updatedHabit = {
-            ...habitObj,
-            weekDates: updatedWeekDates,
-        };
-
-        onDayChange(updatedHabit);
+        
+        onDayChange(updatedWeekDates);
     };
 
     return (
@@ -43,7 +34,7 @@ const WeekDaysPicker = ({ habitObj, onDayChange }: WeekDaysPickerProps) => {
                     <Text
                         style={[
                             styles.weekDay,
-                            habitObj.weekDates.includes(idx) ? styles.selectedDay : styles.unselectedDay,
+                            habitObj.byWeekDay.includes(idx) ? styles.selectedDay : styles.unselectedDay,
                         ]}
                     >
                         {day}

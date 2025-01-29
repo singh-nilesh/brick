@@ -2,69 +2,107 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView } from 'react-native';
 import WeekDaysPicker from '@/components/WeekDaysPicker';
+import { Habit, Group, Task } from '@/utils/customTypes';
 
 interface HabitProps {
-    title: string,
-    weekDates: number[],
-    referenceLink: string | null
+    title: string;
+    weekDates: number[];
+    referenceLink: string | null;
 }
 
 interface TaskProps {
-    title: string,
-    dueDay_count_from_start: number,
-    reference: string | null
+    title: string;
+    dueDay_count_from_start: number;
+    reference: string | null;
 }
 
 const GroupOverview = () => {
     const params = useLocalSearchParams();
-    const data = params.data ? JSON.parse(params.data as string) : { goal: '', habits: [], tasks: [] };
+    const data = params.data ? JSON.parse(params.data as string) : { goal: '', habits: [] as HabitProps[], tasks: [] as TaskProps[] };
+
+    // Map data to Group, Habit, and Tasks schemas
+    const mappedGroup: Group = {
+        id: 0,
+        title: data.goal,
+        description: null,
+        bgColor: '#FFFFFF',
+        textColor: '#000000',
+    };
+
+    const mappedHabits: Habit[] = data.habits.map((habit: HabitProps, index: number) => ({
+        id: index, // Unique identifier for rendering
+        title: habit.title,
+        groupId: 0,
+        createdAt: new Date(),
+        interval: 1,
+        byWeekDay: habit.weekDates.sort((a, b) => a - b), // Ensure sorted order
+        dtStart: new Date(),
+        dtEnd: new Date(new Date().setDate(new Date().getDate() + 30)), // Assuming a default duration
+    }));
+
+    const mappedTasks: Task[] = data.tasks.map((task: TaskProps, index: number) => ({
+        id: index,
+        groupId: 0,
+        title: task.title,
+        status: false,
+        createdAt: new Date(),
+        completedAt: null,
+        dueAt: new Date(new Date().setDate(new Date().getDate() + task.dueDay_count_from_start)), // Fix access issue
+        isDeleted: false,
+        deletedAt: null,
+        group: null,
+        habit: null,
+        references: task.reference ? [{ id: 0, name: 'init reference', url: task.reference }] : [],
+    }));
 
     // Use separate state for goal, habits, and tasks
-    const [goal, setGoal] = useState<string>(data.goal);
-    const [habits, setHabits] = useState<HabitProps[]>(data.habits);
-    const [tasks, setTasks] = useState<TaskProps[]>(data.tasks);
-
-    const renderHabit = (habit: HabitProps, index: number) => {
-        return (
-            <View style={styles.habitContainer} key={`habit-${index}`}>
-                {/* habit title */}
-                <Text style={styles.itemText}>{habit.title}</Text>
-
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {habit.referenceLink ? (
-                        <TouchableOpacity onPress={() => habit.referenceLink && Linking.openURL(habit.referenceLink)}>
-                            <Text style={styles.linkText}>Reference</Text>
-                        </TouchableOpacity>
-                    ) : (<Text style={styles.linkText}>No Reference</Text>)}
+    const [group, setGroup] = useState<Group>(mappedGroup);
+    const [habits, setHabits] = useState<Habit[]>(mappedHabits);
+    const [tasks, setTasks] = useState<Task[]>(mappedTasks);
 
 
-                    {/* Weekdays */}
-                    <WeekDaysPicker habitObj={habit} onDayChange={(newHabit) => {
-                        const updatedHabits = [...habits];
-                        updatedHabits[index] = newHabit;
-                        setHabits(updatedHabits);
-                    }} />
-                </View>
-            </View>
+    // Handle habit change
+    const handleHabitChange = (index: number, newWeekDays: number[]) => {
+        const updatedHabits = habits.map((habit, i) =>
+            i === index ? { ...habit, byWeekDay: newWeekDays.sort((a, b) => a - b) } : habit
         );
+        setHabits(updatedHabits);
     };
 
-    const renderTask = (task: TaskProps, index: number) => {
-        return (
-            <View style={styles.itemContainer} key={`task-${index}`}>
-                <Text style={styles.itemText}>{task.title}</Text>
-                {task.reference && (
-                    <TouchableOpacity onPress={() => task.reference && Linking.openURL(task.reference)}>
+    const renderHabit = (habit: Habit, index: number) => (
+        <View style={styles.habitContainer} key={`habit-${index}`}>
+            {/* Habit Title */}
+            <Text style={styles.itemText}>{habit.title}</Text>
+
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+                {habit.referenceLink ? (
+                    <TouchableOpacity onPress={() => habit.referenceLink && Linking.openURL(habit.referenceLink)}>
                         <Text style={styles.linkText}>Reference</Text>
                     </TouchableOpacity>
+                ) : (
+                    <Text style={styles.linkText}>No Reference</Text>
                 )}
+
+                {/* Weekdays Picker */}
+                <WeekDaysPicker habitObj={habit} onDayChange={(newWeekDays) => handleHabitChange(index, newWeekDays)} />
             </View>
-        );
-    };
+        </View>
+    );
+
+    const renderTask = (task: Task, index: number) => (
+        <View style={styles.itemContainer} key={`task-${index}`}>
+            <Text style={styles.itemText}>{task.title}</Text>
+            {task.references.length > 0 && (
+                <TouchableOpacity onPress={() => Linking.openURL(task.references[0].url)}>
+                    <Text style={styles.linkText}>Reference</Text>
+                </TouchableOpacity>
+            )}
+        </View>
+    );
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.goalTitle}>{goal}</Text>
+            <Text style={styles.goalTitle}>{group.title}</Text>
 
             <Text style={styles.sectionTitle}>Habits</Text>
             {habits.map(renderHabit)}
@@ -118,26 +156,6 @@ const styles = StyleSheet.create({
         width: 120,
         color: '#007BFF',
         marginTop: 4,
-    },
-    weekContainer: {
-        flexDirection: 'row',
-        gap: 4,
-    },
-    weekDay: {
-        fontSize: 14,
-        borderRadius: 4,
-        textAlign: 'center',
-        width: 25,
-        height: 20,
-    },
-    selectedDay: {
-        backgroundColor: '#D1C4E9',
-        color: '#673AB7',
-        fontWeight: 'bold',
-    },
-    unselectedDay: {
-        backgroundColor: '#E0E0E0',
-        color: '#757575',
     },
 });
 

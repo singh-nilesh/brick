@@ -94,6 +94,7 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
                     deleted_at: null,
                     is_task: 1,
                     habit_id: habit.id,
+                    habitReferences: [{ id: null, name: 'Habit Reference', url: habit.referenceLink }],
                 });
             }
         }
@@ -110,14 +111,20 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     if (dueAt.toDateString() === new Date().toDateString()) {
         const insertStmt = await db.prepareAsync(`INSERT INTO todos (title, group_id, due_at, habit_id, is_task, created_at)
                 VALUES ( $title, $groupId, $dueAt, $habitId, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`);
+        
+        const insertRef = await db.prepareAsync(`INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`);
         try {
             for (const Task of dynamicTasks) {
-                await insertStmt.executeAsync({
+
+                let lastTaskId = await (await insertStmt.executeAsync({
                     $title: Task.title,
                     $groupId: Task.group_id,
                     $dueAt: formatDateForDB(dueAt),
                     $habitId: Task.habit_id,
-                });
+                }))?.lastInsertRowId;
+
+                // Add references
+                await insertRef.executeAsync([lastTaskId, Task.habitReferences[0].name, Task.habitReferences[0].url]);
             }
         }
         finally {
@@ -126,6 +133,7 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     }
     return [...tasks, ...dynamicTasks];
 };
+
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
@@ -373,7 +381,6 @@ export const getGroups = async (db: SQLiteDatabase) => {
             description: group.description,
             bgColor: group.group_bgColor,
             textColor: group.group_textColor,
-            newTaskCount: 0,
         }));
         return groupsList;
     } finally {
@@ -385,7 +392,7 @@ export const getGroups = async (db: SQLiteDatabase) => {
 // Add Habit
 export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
     const insertQuery = await db.prepareAsync(
-        `INSERT INTO habits (group_id, title, interval, by_week_day, dt_start, dt_end) VALUES (?, ?, ?, ?, ?, ?)`);
+        `INSERT INTO habits (group_id, title, interval, by_week_day, dt_start, dt_end, reference_link) VALUES (?, ?, ?, ?, ?, ?, ?)`);
     var HabitId: number;
 
     try {
@@ -396,6 +403,8 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
             JSON.stringify(newHabit.byWeekDay),
             formatDateForDB(newHabit.dtStart),
             formatDateForDB(newHabit.dtEnd),
+            newHabit.referenceLink ?? null,
+
         ])
         console.log('Habit added successfully');
     }
@@ -404,6 +413,7 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
     }
 }
 
+// get links for Feeds
 export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
     const dt_from = formatDateForDB(from);
     const dt_to = formatDateForDB(to);
