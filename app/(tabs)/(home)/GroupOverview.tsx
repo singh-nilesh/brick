@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView } from 'react-native';
 import WeekDaysPicker from '@/components/WeekDaysPicker';
 import { Habit, Group, Task } from '@/utils/customTypes';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 interface HabitProps {
     title: string;
@@ -38,7 +39,9 @@ const GroupOverview = () => {
         byWeekDay: habit.weekDates.sort((a, b) => a - b), // Ensure sorted order
         dtStart: new Date(),
         dtEnd: new Date(new Date().setDate(new Date().getDate() + 30)), // Assuming a default duration
+        referenceLink: habit.referenceLink?.toString() || null,
     }));
+
 
     const mappedTasks: Task[] = data.tasks.map((task: TaskProps, index: number) => ({
         id: index,
@@ -80,7 +83,7 @@ const GroupOverview = () => {
                         <Text style={styles.linkText}>Reference</Text>
                     </TouchableOpacity>
                 ) : (
-                    <Text style={styles.linkText}>No Reference</Text>
+                    <Text style={styles.linkText}></Text>
                 )}
 
                 {/* Weekdays Picker */}
@@ -101,17 +104,35 @@ const GroupOverview = () => {
     );
 
     return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.goalTitle}>{group.title}</Text>
+        <View style={{ flex: 1 }}>
+            <View style={styles.header}>
+                {/* Back Button */}
+                <AntDesign name="leftcircleo" size={30} color="black"
+                    onPress={() => router.back()}
+                />
 
-            <Text style={styles.sectionTitle}>Habits</Text>
-            {habits.map(renderHabit)}
+                <TouchableOpacity style={{ backgroundColor: 'white' }}>
+                    <Text style={[styles.buttons, { color: 'black' }]}>regenerate</Text>
+                </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.container}>
+                <Text style={styles.goalTitle}>{group.title}</Text>
 
-            <Text style={styles.sectionTitle}>Tasks</Text>
-            {tasks.map(renderTask)}
+                <Text style={styles.sectionTitle}>Habits</Text>
+                {habits.map(renderHabit)}
 
-            <View style={{ height: 90 }} />
-        </ScrollView>
+                <Text style={styles.sectionTitle}>Tasks</Text>
+                {tasks.map(renderTask)}
+
+                <View style={{ height: 200 }} />
+            </ScrollView>
+
+            <View style={{ alignItems: 'center' }}>
+                <TouchableOpacity style={styles.floatingButtons}>
+                    <Text style={[styles.buttons, { color: 'white', fontSize:23 }]}>save</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 };
 
@@ -119,7 +140,14 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 16,
+        padding: 10,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 5,
+        paddingHorizontal: 20,
+        backgroundColor: 'white'
     },
     goalTitle: {
         fontSize: 24,
@@ -157,6 +185,22 @@ const styles = StyleSheet.create({
         color: '#007BFF',
         marginTop: 4,
     },
+
+    floatingButtons: {
+        position: 'absolute',
+        bottom: 20,
+        height: 50,
+        width: '90%',
+        backgroundColor: 'black',
+        padding: 7,
+        borderRadius: 10,
+        elevation: 5
+    },
+    buttons: {
+        fontWeight: 'bold',
+        textAlign: 'center',
+        fontSize: 18
+    }
 });
 
 export default GroupOverview;

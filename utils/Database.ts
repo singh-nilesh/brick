@@ -29,8 +29,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
            title TEXT NOT NULL,
            description TEXT,
            group_bgColor TEXT NOT NULL DEFAULT '#FFFFFF',
-           group_textColor TEXT NOT NULL DEFAULT '#000000',
-           new_task_count INTEGER NOT NULL DEFAULT 0
+           group_textColor TEXT NOT NULL DEFAULT '#000000'
         );
 
         CREATE TABLE IF NOT EXISTS habits (
@@ -41,7 +40,8 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             interval INTEGER NOT NULL DEFAULT 1,
             by_week_day TEXT NOT NULL DEFAULT '[]',
             dt_start TEXT NOT NULL DEFAULT (DATE('now')),
-            dt_end TEXT NOT NULL DEFAULT (DATE('now'))
+            dt_end TEXT NOT NULL DEFAULT (DATE('now')),
+            reference_link TEXT
         );
 
 
