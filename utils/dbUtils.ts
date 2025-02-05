@@ -70,5 +70,6 @@ export const mapDBToHabit = (dbRow: any): Habit => {
         byWeekDay: JSON.parse(dbRow.by_week_day),
         dtStart: parseDateFromDB(dbRow.dt_start) as Date,
         dtEnd: parseDateFromDB(dbRow.dt_end) as Date,
+        referenceLink: dbRow.reference_link,
     };
 };

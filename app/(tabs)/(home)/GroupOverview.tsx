@@ -19,8 +19,13 @@ interface TaskProps {
 
 const GroupOverview = () => {
     const params = useLocalSearchParams();
-    const data = params.data ? JSON.parse(params.data as string) : { goal: '', habits: [] as HabitProps[], tasks: [] as TaskProps[] };
-
+    var data = { goal: '', habits: [], tasks: [] };
+    try {
+    data = params.data ? JSON.parse(params.data as string) : { goal: '', habits: [] as HabitProps[], tasks: [] as TaskProps[] };
+    }
+    catch (error) {
+        alert('Invalid JSON data');
+    }
     // Map data to Group, Habit, and Tasks schemas
     const mappedGroup: Group = {
         id: 0,
@@ -56,6 +61,7 @@ const GroupOverview = () => {
         group: null,
         habit: null,
         references: task.reference ? [{ id: 0, name: 'init reference', url: task.reference }] : [],
+        priority: 5, // Default priority value
     }));
 
     // Use separate state for goal, habits, and tasks

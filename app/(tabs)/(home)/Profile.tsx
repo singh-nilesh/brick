@@ -5,6 +5,8 @@ import { useFocusEffect, useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useSQLiteContext } from "expo-sqlite";
 import { getGroupOverview } from "@/utils/taskService";
+import JsonInput from "@/components/JsonInput";
+import JsonGuide from "@/components/JsonGuide";
 
 
 const data = {
@@ -78,6 +80,8 @@ interface GroupsProps {
 const Profile = () => {
   const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [jsonVisible, setJsonVisible] = useState(false);
+  const [jsonGuideVisible, setJsonGuideVisible] = useState(false);
   const [groupList, setGroupList] = useState<GroupsProps[]>([]);
   const db = useSQLiteContext();
 
@@ -113,10 +117,10 @@ const Profile = () => {
         <Text style={styles.details}>{item.description}</Text>
       </View>
 
-      <View style={{flexDirection: 'column', justifyContent: 'space-between', paddingHorizontal: 10}}>
+      <View style={{ flexDirection: 'column', justifyContent: 'space-between', paddingHorizontal: 10 }}>
         <Text style={styles.details}>Habits: {item.habitCount}</Text>
         <Text style={styles.details}>Tasks {item.completedTask}/{item.taskCount}</Text>
-        </View>
+      </View>
     </View>
   );
 
@@ -144,13 +148,13 @@ const Profile = () => {
       {/* Floating Menu */}
       {menuVisible && (
         <View style={styles.floatingMenu}>
+
+          <AntDesign style={{ padding: 7 }} name="infocirlceo" size={24} color="black" onPress={() =>setJsonGuideVisible(true)} />
+
           <TouchableOpacity style={styles.menuItem}
-            onPress={() => router.push({
-              pathname: "/(home)/GroupOverview",
-              params: { data: JSON.stringify(data) },
-            })}
+            onPress={() => setJsonVisible(true)} 
           >
-            <Text style={styles.menuText}>paste JSON</Text>
+            <Text style={styles.menuText}>Paste JSON</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}
@@ -162,6 +166,30 @@ const Profile = () => {
             <Text style={styles.menuText}>AI generated</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {/* JSON Input */}
+      {jsonVisible && (
+        <JsonInput
+          isVisible={jsonVisible}
+          onClose={() => setJsonVisible(false)}
+          
+            onSave={(jsonText) => {
+              router.push({
+                pathname: "/(home)/GroupOverview",
+                params: { data: JSON.stringify(jsonText) },
+              })
+              setJsonVisible(false)
+            }}
+        />
+      )}
+
+      {/* Json Guide */}
+      {JsonGuide && (
+        <JsonGuide
+          isVisible={jsonGuideVisible}
+          onClose={() => setJsonGuideVisible(false)}
+        />
       )}
 
     </View>

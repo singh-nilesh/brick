@@ -69,7 +69,7 @@ const Progress = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
-      {/* Group tabs */}
+      {/* Group tabs bar*/}
       <View style={{ height: 50, backgroundColor: '#FFF', margin: 10 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
           {Groups.map((group, index) => (
@@ -102,10 +102,13 @@ const Progress = () => {
                   setSelectedTask(item);
                   setShowTaskBottomSheet(true);
                 }}
-               style={styles.stepContainer}>
+               style={[styles.stepContainer, 
+                {borderColor: item.dueAt && format(new Date(item.dueAt), 'yyyy-MM-dd') === format(new Date(Date.now()), 'yyyy-MM-dd') ? 'lightgrey' : 'transparent'}
+               ]}>
 
                 {/* Circle with dynamic status color */}
-                <View style={[styles.dayContainer, { backgroundColor: circleColor }]}>
+                <View style={[styles.dayContainer, { backgroundColor: circleColor,
+                   borderBlockColor: item.dueAt && format(new Date(item.dueAt), 'yyyy-MM-dd') === format(new Date(Date.now()), 'yyyy-MM-dd') ? 'black' : 'transparent' }]}>
                   <Text style={styles.dayText}>{index + 1}</Text>
                 </View>
 
@@ -152,11 +155,15 @@ const styles = StyleSheet.create({
   stepContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderEndWidth: 2,
+    borderBottomWidth: 2,
     marginBottom: 16,
+    borderRadius: 15,
   },
   dayContainer: {
     width: 40,
     height: 40,
+    borderWidth: 3,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
