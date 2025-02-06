@@ -60,7 +60,9 @@ template:
     return (
         <Modal visible={isVisible} transparent animationType='slide' onRequestClose={onClose}>
 
-            <TouchableOpacity style={styles.backdrop} onPress={onClose} />
+            <View style={styles.backdrop}>
+
+            <TouchableOpacity style={{flex:1}} onPress={onClose} />
 
             <View style={styles.modal}>
                 <Text style={styles.title}>How to use "Paste JSON"</Text>
@@ -69,22 +71,31 @@ template:
                     style={styles.input}
                     value={goal}
                     onChangeText={setGoal}
-                    placeholder="Enter user's goal here"
+                    placeholder="Enter your goal here"
                 />
-                <TextInput
-                    style={styles.input}
+                <View style={{flexDirection:'row'}}>
+                    <Text style={{padding:10}}> No.of Habits to add: </Text>
+
+                    <TextInput
+                    style={[styles.input, {width: 170}]}
                     value={habitCount.toString()}
                     inputMode='numeric'
                     onChangeText={(text) => setHabitsCount(text ? parseInt(text) || 0 : 0)}
                     placeholder="Enter Number of Habits you want to add"
                 />
-                <TextInput
-                    style={styles.input}
+                </View>
+
+                <View style={{flexDirection:'row'}}>
+                    <Text style={{padding:10}}> No.of Tasks to add: </Text>
+
+                    <TextInput
+                    style={[styles.input, {width: 170}]}
                     value={tasksCount.toString()}
                     inputMode='numeric'
                     onChangeText={(text) => setTasksCount(text ? parseInt(text) || 0 : 0)}
                     placeholder="Enter Number of Tasks you want to add"
                 />
+                </View>
 
                 <Text style={{padding:10}}>
                     Copy the contents and Paste it, as prompt to any AI model of your liking, Chat gpt, 
@@ -101,6 +112,7 @@ template:
                 <ScrollView style={styles.textContainer}>
                     <Text style={{ paddingBottom: 30 }}>{manualText}</Text>
                 </ScrollView>
+            </View>
             </View>
         </Modal>
     );
@@ -140,7 +152,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'black',
         paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 5,
+        borderRadius: 10,
         marginBottom: 10,
     },
     buttonText: {

@@ -2,6 +2,7 @@ import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToHabit, mapDBToTask } from "./dbUtils";
 import { formatDateForDB } from "./dbUtils";
 import { Group, Habit, Task } from "./customTypes";
+import { ToastAndroid } from "react-native";
 
 
 // Add Tasks
@@ -29,20 +30,22 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
     }
 
     // Add references
-    if (newTask.references.length > 0) {
+    // Fix: Ensure references are valid before inserting
+    const validReferences = newTask.references.filter(ref => ref.url && ref.url.trim() !== '');
+
+    if (validReferences.length > 0) {
         const addRefQuery = await db.prepareAsync(
             `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
         );
         try {
-            newTask.references.forEach(async (ref) => {
+            for (const ref of validReferences) {
                 await addRefQuery.executeAsync([TaskId, ref.name, ref.url]);
-            });
+            }
         } finally {
             await addRefQuery.finalizeAsync();
         }
     }
 }
-
 
 // Generate Task Dynamically
 const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate: Date): Promise<any[]> => {
@@ -94,7 +97,9 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
                     deleted_at: null,
                     is_task: 1,
                     habit_id: habit.id,
-                    habitReferences: [{ id: null, name: 'Habit Reference', url: habit.referenceLink }],
+                    habitReferences: habit.referenceLink
+                        ? [{ id: null, name: 'Habit Reference', url: habit.referenceLink }]
+                        : [],
                 });
             }
         }
@@ -111,7 +116,7 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     if (dueAt.toDateString() === new Date().toDateString()) {
         const insertStmt = await db.prepareAsync(`INSERT INTO todos (title, group_id, due_at, habit_id, is_task, created_at)
                 VALUES ( $title, $groupId, $dueAt, $habitId, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`);
-        
+
         const insertRef = await db.prepareAsync(`INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`);
         try {
             for (const Task of dynamicTasks) {
@@ -124,7 +129,9 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
                 }))?.lastInsertRowId;
 
                 // Add references
-                await insertRef.executeAsync([lastTaskId, Task.habitReferences[0].name, Task.habitReferences[0].url]);
+                if (Task.habitReferences.length > 0) {
+                    await insertRef.executeAsync([lastTaskId, Task.habitReferences[0].name, Task.habitReferences[0].url]);
+                }
             }
         }
         finally {
@@ -221,11 +228,13 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
                 );
                 try {
                     const refRows = await refQuery.executeAsync({ $todoId: row.id });
-                    references = (await refRows.getAllAsync()).map((ref: any) => ({
-                        id: ref.id,
-                        name: ref.name,
-                        url: ref.url,
-                    }));
+                    references = (await refRows.getAllAsync())
+                        .filter((ref: any) => ref.url && ref.url.trim() !== '')
+                        .map((ref: any) => ({
+                            id: ref.id,
+                            name: ref.name,
+                            url: ref.url,
+                        }));
                 } finally {
                     await refQuery.finalizeAsync();
                 }
@@ -252,7 +261,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 
 
 
-// get task by group
+// get task by group PROGRESS PAGE
 export const getTasksByGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
     const todoQuery = await db.prepareAsync(
         `SELECT * FROM todos WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
@@ -367,7 +376,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
     }
 }
 
-// get all Group
+// get Group list
 export const getGroups = async (db: SQLiteDatabase) => {
     const groupsQuery = await db.prepareAsync(
         `SELECT * FROM groups`
@@ -405,19 +414,18 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
             formatDateForDB(newHabit.dtEnd),
             newHabit.referenceLink ?? null,
 
-        ])
-        console.log('Habit added successfully');
+        ]);
     }
     finally {
         await insertQuery.finalizeAsync();
     }
 }
 
-// get links for Feeds
-export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
+// get links for FEEDS PAGE
+export const getRefLinks = async (db: SQLiteDatabase, from: Date, to: Date) => {
     const dt_from = formatDateForDB(from);
     const dt_to = formatDateForDB(to);
-    
+
     const refQuery = await db.prepareAsync(
         `SELECT
         todos.id AS task_id,
@@ -437,14 +445,14 @@ export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
             task_title: ref.task_title as string,
             ref_name: ref.ref_name as string,
             ref_url: ref.ref_url as string,
-            }));
+        }));
     } finally {
         await refQuery.finalizeAsync();
     }
 }
 
 
-// get All group details, habits and tasks
+// get All group Summary,  User PROFILE PAGE
 export const getGroupOverview = async (db: SQLiteDatabase) => {
 
     // LEFT join + WHERE  ==> INNER JOIN, (use AND instead of WHERE)
@@ -488,5 +496,49 @@ export const getGroupOverview = async (db: SQLiteDatabase) => {
     } finally {
         await habitsQuery.finalizeAsync();
         await groupsQuery.finalizeAsync();
+    }
+}
+
+
+// Add Groups
+export const addGroup = async (db: SQLiteDatabase, newGroup: Group, newHabits: Habit[] | null, newTasks: Task[] | null) => {
+    const insertQuery = await db.prepareAsync(
+        `INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?)`);
+    try {
+        const groupId = await (await insertQuery.executeAsync([
+            newGroup.title,
+            newGroup.description ?? '',
+            newGroup.bgColor,
+            newGroup.textColor,
+        ]))?.lastInsertRowId;
+
+        // map group id to habits and tasks
+        if (newHabits) {
+            newHabits.forEach(async (habit) => {
+                habit.groupId = groupId;
+                await addHabit(db, habit);
+            });
+        }
+
+        if (newTasks) {
+            newTasks.forEach(async (task) => {
+                task.group = {
+                    id: groupId,
+                    title: newGroup.title,
+                    bgColor: newGroup.bgColor,
+                    textColor: newGroup.textColor,
+                };
+                await addTask(db, task);
+            });
+        }
+
+        // notify user
+        ToastAndroid.show('Group added successfully', ToastAndroid.SHORT);
+    }
+    catch (error) {
+        ToastAndroid.show('Unable to add group', ToastAndroid.SHORT);
+    }
+    finally {
+        await insertQuery.finalizeAsync();
     }
 }

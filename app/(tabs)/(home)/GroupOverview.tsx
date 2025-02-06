@@ -1,9 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, ToastAndroid } from 'react-native';
 import WeekDaysPicker from '@/components/WeekDaysPicker';
 import { Habit, Group, Task } from '@/utils/customTypes';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useSQLiteContext } from 'expo-sqlite';
+import { addGroup } from '@/utils/taskService';
+import { format } from 'date-fns';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 interface HabitProps {
     title: string;
@@ -18,20 +23,28 @@ interface TaskProps {
 }
 
 const GroupOverview = () => {
+
+    const db = useSQLiteContext();
+    const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
+
+    // Get JSON data from previous screen
     const params = useLocalSearchParams();
     var data = { goal: '', habits: [], tasks: [] };
     try {
-    data = params.data ? JSON.parse(params.data as string) : { goal: '', habits: [] as HabitProps[], tasks: [] as TaskProps[] };
+        data = params.data ? JSON.parse(params.data as string) : { goal: '', habits: [] as HabitProps[], tasks: [] as TaskProps[] };
     }
     catch (error) {
         alert('Invalid JSON data');
     }
-    // Map data to Group, Habit, and Tasks schemas
+
+    // Map data to Group, Habit, and Tasks objects
     const mappedGroup: Group = {
         id: 0,
-        title: data.goal,
-        description: null,
-        bgColor: '#FFFFFF',
+        title: 'New Roadmap',
+        description: data.goal,
+        bgColor: '#D1F8EF',
         textColor: '#000000',
     };
 
@@ -46,7 +59,6 @@ const GroupOverview = () => {
         dtEnd: new Date(new Date().setDate(new Date().getDate() + 30)), // Assuming a default duration
         referenceLink: habit.referenceLink?.toString() || null,
     }));
-
 
     const mappedTasks: Task[] = data.tasks.map((task: TaskProps, index: number) => ({
         id: index,
@@ -64,6 +76,7 @@ const GroupOverview = () => {
         priority: 5, // Default priority value
     }));
 
+
     // Use separate state for goal, habits, and tasks
     const [group, setGroup] = useState<Group>(mappedGroup);
     const [habits, setHabits] = useState<Habit[]>(mappedHabits);
@@ -78,6 +91,33 @@ const GroupOverview = () => {
         setHabits(updatedHabits);
     };
 
+    // function to save the group, habits, and tasks to the database
+    const handelOnSave = async () => {
+        await addGroup(db, group, habits, tasks);
+        router.back();
+    };
+
+    // Handle opening the date picker
+    const openDatePicker = (index: number) => {
+        setSelectedTaskIndex(index);
+        setShowDatePicker(true);
+    };
+
+    // Handle Due Date change
+    const handleDateChange = (event: any, selectedDate?: Date) => {
+        setShowDatePicker(false);
+        if (selectedDate && selectedTaskIndex !== null) {
+            setTasks((prevTasks) =>
+                prevTasks.map((task, i) =>
+                    i === selectedTaskIndex ? { ...task, dueAt: selectedDate } : task
+                )
+            );
+        }
+        setSelectedTaskIndex(null);
+    };
+
+
+    // Render habit component
     const renderHabit = (habit: Habit, index: number) => (
         <View style={styles.habitContainer} key={`habit-${index}`}>
             {/* Habit Title */}
@@ -98,16 +138,29 @@ const GroupOverview = () => {
         </View>
     );
 
+    // Render task component (Updated)
     const renderTask = (task: Task, index: number) => (
         <View style={styles.itemContainer} key={`task-${index}`}>
             <Text style={styles.itemText}>{task.title}</Text>
-            {task.references.length > 0 && (
-                <TouchableOpacity onPress={() => Linking.openURL(task.references[0].url)}>
-                    <Text style={styles.linkText}>Reference</Text>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                {task.references.length > 0 ? (
+                    <TouchableOpacity onPress={() => Linking.openURL(task.references[0].url)}>
+                        <Text style={styles.linkText}>Reference</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <Text style={styles.linkText}></Text>
+                )}
+
+                <TouchableOpacity onPress={() => openDatePicker(index)}>
+                    <Text style={{ fontSize: 11, color: '#D2665A', fontWeight: 'bold' }}>
+                        {task.dueAt ? format(new Date(task.dueAt), 'MMM dd') : 'No due date'}
+                    </Text>
                 </TouchableOpacity>
-            )}
+            </View>
         </View>
     );
+
 
     return (
         <View style={{ flex: 1 }}>
@@ -122,7 +175,7 @@ const GroupOverview = () => {
                 </TouchableOpacity>
             </View>
             <ScrollView style={styles.container}>
-                <Text style={styles.goalTitle}>{group.title}</Text>
+                <Text style={styles.goalTitle}>{group.description}</Text>
 
                 <Text style={styles.sectionTitle}>Habits</Text>
                 {habits.map(renderHabit)}
@@ -134,10 +187,26 @@ const GroupOverview = () => {
             </ScrollView>
 
             <View style={{ alignItems: 'center' }}>
-                <TouchableOpacity style={styles.floatingButtons}>
-                    <Text style={[styles.buttons, { color: 'white', fontSize:23 }]}>save</Text>
+                <TouchableOpacity style={styles.floatingButtons}
+                    onPress={() => {
+                        handelOnSave();
+                        router.back();
+                    }}>
+                    <Text style={[styles.buttons, { color: 'white', fontSize: 23 }]}>Save</Text>
                 </TouchableOpacity>
             </View>
+
+
+            {/* Date Picker */}
+            {showDatePicker && selectedTaskIndex !== null && (
+                <DateTimePicker
+                    value={tasks[selectedTaskIndex]?.dueAt || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                />
+            )}
+
         </View>
     );
 };

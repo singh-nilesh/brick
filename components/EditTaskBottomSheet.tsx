@@ -118,7 +118,7 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                     <View style={styles.rowContainer}>
                         <Text style={styles.tag}>Due date:</Text>
                         {isEditing ? (
-                            <>
+                            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                                 <Text style={[styles.tag, styles.standardTag]}>
                                     {editedTask.dueAt ? format(editedTask.dueAt, 'dd MMM') : 'Select date'}
                                 </Text>
@@ -126,9 +126,8 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                                     name="calendar"
                                     size={20} style={{ marginLeft: 10 }}
                                     color="black"
-                                    onPress={() => setShowDatePicker(true)}
                                 />
-                            </>
+                            </TouchableOpacity>
                         ) : (
                             <Text style={[styles.tag, styles.standardTag]}>
                                 {task.dueAt ? format(task.dueAt, 'dd MMM') : 'No due date'}
