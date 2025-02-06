@@ -2,6 +2,7 @@ import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToHabit, mapDBToTask } from "./dbUtils";
 import { formatDateForDB } from "./dbUtils";
 import { Group, Habit, Task } from "./customTypes";
+import { ToastAndroid } from "react-native";
 
 
 // Add Tasks
@@ -29,20 +30,22 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
     }
 
     // Add references
-    if (newTask.references.length > 0) {
+    // Fix: Ensure references are valid before inserting
+    const validReferences = newTask.references.filter(ref => ref.url && ref.url.trim() !== '');
+
+    if (validReferences.length > 0) {
         const addRefQuery = await db.prepareAsync(
             `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
         );
         try {
-            newTask.references.forEach(async (ref) => {
+            for (const ref of validReferences) {
                 await addRefQuery.executeAsync([TaskId, ref.name, ref.url]);
-            });
+            }
         } finally {
             await addRefQuery.finalizeAsync();
         }
     }
 }
-
 
 // Generate Task Dynamically
 const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate: Date): Promise<any[]> => {
@@ -94,6 +97,9 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
                     deleted_at: null,
                     is_task: 1,
                     habit_id: habit.id,
+                    habitReferences: habit.referenceLink
+                        ? [{ id: null, name: 'Habit Reference', url: habit.referenceLink }]
+                        : [],
                 });
             }
         }
@@ -110,14 +116,22 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     if (dueAt.toDateString() === new Date().toDateString()) {
         const insertStmt = await db.prepareAsync(`INSERT INTO todos (title, group_id, due_at, habit_id, is_task, created_at)
                 VALUES ( $title, $groupId, $dueAt, $habitId, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`);
+
+        const insertRef = await db.prepareAsync(`INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`);
         try {
             for (const Task of dynamicTasks) {
-                await insertStmt.executeAsync({
+
+                let lastTaskId = await (await insertStmt.executeAsync({
                     $title: Task.title,
                     $groupId: Task.group_id,
                     $dueAt: formatDateForDB(dueAt),
                     $habitId: Task.habit_id,
-                });
+                }))?.lastInsertRowId;
+
+                // Add references
+                if (Task.habitReferences.length > 0) {
+                    await insertRef.executeAsync([lastTaskId, Task.habitReferences[0].name, Task.habitReferences[0].url]);
+                }
             }
         }
         finally {
@@ -126,6 +140,7 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     }
     return [...tasks, ...dynamicTasks];
 };
+
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
@@ -213,11 +228,13 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
                 );
                 try {
                     const refRows = await refQuery.executeAsync({ $todoId: row.id });
-                    references = (await refRows.getAllAsync()).map((ref: any) => ({
-                        id: ref.id,
-                        name: ref.name,
-                        url: ref.url,
-                    }));
+                    references = (await refRows.getAllAsync())
+                        .filter((ref: any) => ref.url && ref.url.trim() !== '')
+                        .map((ref: any) => ({
+                            id: ref.id,
+                            name: ref.name,
+                            url: ref.url,
+                        }));
                 } finally {
                     await refQuery.finalizeAsync();
                 }
@@ -244,7 +261,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 
 
 
-// get task by group
+// get task by group PROGRESS PAGE
 export const getTasksByGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
     const todoQuery = await db.prepareAsync(
         `SELECT * FROM todos WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
@@ -359,7 +376,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
     }
 }
 
-// get all Group
+// get Group list
 export const getGroups = async (db: SQLiteDatabase) => {
     const groupsQuery = await db.prepareAsync(
         `SELECT * FROM groups`
@@ -373,7 +390,6 @@ export const getGroups = async (db: SQLiteDatabase) => {
             description: group.description,
             bgColor: group.group_bgColor,
             textColor: group.group_textColor,
-            newTaskCount: 0,
         }));
         return groupsList;
     } finally {
@@ -385,7 +401,7 @@ export const getGroups = async (db: SQLiteDatabase) => {
 // Add Habit
 export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
     const insertQuery = await db.prepareAsync(
-        `INSERT INTO habits (group_id, title, interval, by_week_day, dt_start, dt_end) VALUES (?, ?, ?, ?, ?, ?)`);
+        `INSERT INTO habits (group_id, title, interval, by_week_day, dt_start, dt_end, reference_link) VALUES (?, ?, ?, ?, ?, ?, ?)`);
     var HabitId: number;
 
     try {
@@ -396,18 +412,20 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
             JSON.stringify(newHabit.byWeekDay),
             formatDateForDB(newHabit.dtStart),
             formatDateForDB(newHabit.dtEnd),
-        ])
-        console.log('Habit added successfully');
+            newHabit.referenceLink ?? null,
+
+        ]);
     }
     finally {
         await insertQuery.finalizeAsync();
     }
 }
 
-export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
+// get links for FEEDS PAGE
+export const getRefLinks = async (db: SQLiteDatabase, from: Date, to: Date) => {
     const dt_from = formatDateForDB(from);
     const dt_to = formatDateForDB(to);
-    
+
     const refQuery = await db.prepareAsync(
         `SELECT
         todos.id AS task_id,
@@ -427,8 +445,133 @@ export const getRefLinks = async (db: SQLiteDatabase, from:Date, to:Date) => {
             task_title: ref.task_title as string,
             ref_name: ref.ref_name as string,
             ref_url: ref.ref_url as string,
-            }));
+        }));
     } finally {
         await refQuery.finalizeAsync();
+    }
+}
+
+
+// get All group Summary,  User PROFILE PAGE
+export const getGroupOverview = async (db: SQLiteDatabase) => {
+
+    // LEFT join + WHERE  ==> INNER JOIN, (use AND instead of WHERE)
+    const groupsQuery = await db.prepareAsync(
+        `SELECT
+            groups.id AS group_id,
+            groups.title AS group_title,
+            groups.description AS group_description,
+            groups.group_bgColor AS group_bgColor,
+            COUNT(todos.id) AS task_count,
+            COUNT(todos.completed_at) AS completed_count
+        FROM groups
+        LEFT JOIN todos ON groups.id = todos.group_id 
+            AND todos.is_task = 1 
+            AND todos.is_deleted = 0 
+            AND todos.habit_id IS NULL
+        GROUP BY groups.id`
+    );
+
+    const habitsQuery = await db.prepareAsync(`SELECT count(id) AS habit_count FROM habits WHERE group_id = $groupId`);
+    try {
+        const groupsRows = await groupsQuery.executeAsync();
+        const groups = await groupsRows.getAllAsync();
+        let result = groups.map((group: any) => ({
+            id: group.group_id,
+            title: group.group_title,
+            description: group.group_description,
+            bgColor: group.group_bgColor,
+            taskCount: group.task_count,
+            completedTask: group.completed_count,
+            habitCount: 0,
+        }));
+
+        for (let group of result) {
+            const habitRows = await habitsQuery.executeAsync({ $groupId: group.id });
+            const habits = await habitRows.getFirstAsync();
+            group.habitCount = (habits as { habit_count: number }).habit_count;
+        }
+
+        return result;
+    } finally {
+        await habitsQuery.finalizeAsync();
+        await groupsQuery.finalizeAsync();
+    }
+}
+
+
+// Add Groups
+export const addGroup = async (db: SQLiteDatabase, newGroup: Group, newHabits: Habit[] | null, newTasks: Task[] | null) => {
+    const insertQuery = await db.prepareAsync(
+        `INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?)`);
+    try {
+        const groupId = await (await insertQuery.executeAsync([
+            newGroup.title,
+            newGroup.description ?? '',
+            newGroup.bgColor,
+            newGroup.textColor,
+        ]))?.lastInsertRowId;
+
+        // map group id to habits and tasks
+        if (newHabits) {
+            newHabits.forEach(async (habit) => {
+                habit.groupId = groupId;
+                await addHabit(db, habit);
+            });
+        }
+
+        if (newTasks) {
+            newTasks.forEach(async (task) => {
+                task.group = {
+                    id: groupId,
+                    title: newGroup.title,
+                    bgColor: newGroup.bgColor,
+                    textColor: newGroup.textColor,
+                };
+                await addTask(db, task);
+            });
+        }
+
+        // notify user
+        ToastAndroid.show('Group added successfully', ToastAndroid.SHORT);
+    }
+    catch (error) {
+        ToastAndroid.show('Unable to add group', ToastAndroid.SHORT);
+    }
+    finally {
+        await insertQuery.finalizeAsync();
+    }
+}
+
+// Delete Group -- this wont work you have to delete the references as well
+export const deleteGroup = async (db: SQLiteDatabase, groupId: number) => {
+
+    const getTaskId = await db.prepareAsync(`SELECT id FROM todos WHERE group_id = ?`);
+    const delGroupQuery = await db.prepareAsync(`DELETE FROM groups WHERE id = ?`);
+    const delHabitsQuery = await db.prepareAsync(`DELETE FROM habits WHERE group_id = ?`);
+    const delTasksQuery = await db.prepareAsync(`DELETE FROM todos WHERE group_id = ?`);
+
+    try {
+        // Delete references
+        const IdList = await (await getTaskId.executeAsync([groupId])).getAllAsync();
+        for (let Id of IdList as { id: number }[]) {
+            await db.execAsync(`DELETE FROM reference WHERE task_id = ${Id.id}`);
+        }
+
+        // Delete tasks, habits and group 
+        await delHabitsQuery.executeAsync([groupId]);
+        await delTasksQuery.executeAsync([groupId]);
+        await delGroupQuery.executeAsync([groupId]);
+        
+        ToastAndroid.show('Group deleted successfully', ToastAndroid.SHORT);
+    }
+    catch (error) {
+        console.error("Error deleting group:", error);
+        ToastAndroid.show('Unable to delete group', ToastAndroid.SHORT);
+    }
+    finally {
+        await delGroupQuery.finalizeAsync();
+        await delHabitsQuery.finalizeAsync();
+        await delTasksQuery.finalizeAsync();
     }
 }

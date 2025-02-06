@@ -1,13 +1,13 @@
 import React from "react";
 import { View, ScrollView, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
 import { Slot, useRouter } from "expo-router";
-import Feather from '@expo/vector-icons/Feather';
 import { format } from "date-fns"; // Import date-fns for formatting today's date
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 const categories = [
   { name: "Today", route: "/(tabs)/(tasks)/Today" },
   { name: "Upcoming", route: "/(tabs)/(tasks)/Upcoming" },
-  { name: "Todo", route: "/(tabs)/(tasks)/TodoScreen" }, // Add more categories if needed
+  { name: "Todo", route: "/(tabs)/(tasks)/TodoScreen" },
 ];
 
 const TasksLayout = () => {
@@ -18,7 +18,7 @@ const TasksLayout = () => {
   const todayDay = format(new Date(), "EEEE");
 
 
-  
+
   const [showHeader, setShowHeader] = React.useState(true);
 
   const handleTabPress = (category: { name: string; route: string }) => {
@@ -33,10 +33,13 @@ const TasksLayout = () => {
     <SafeAreaView style={{ flex: 1 }}>
       {showHeader && (
         <View style={styles.header}>
-          <Text style={styles.dateText}>{todayDate} 
-            <Text style={{ color:'grey', fontSize:20}}>  {todayDay}</Text>
+          <Text style={styles.dateText}>{todayDate}
+            <Text style={{ color: 'grey', fontSize: 20 }}>  {todayDay}</Text>
           </Text>
-          <Feather name="settings" size={24} color="black" />
+
+          <FontAwesome6 name="user-astronaut" size={30} color="black" onPress={() => router.push('/Profile')} />
+          {/*<EvilIcons name="user" size={50} color="black" onPress={() => router.push('/Profile')} /> */}
+
         </View>
       )}
       <View style={styles.container}>

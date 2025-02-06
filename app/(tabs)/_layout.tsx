@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Foundation from '@expo/vector-icons/Foundation';
-import { Tabs } from "expo-router";
-import { View, TouchableOpacity, StyleSheet, Text, KeyboardAvoidingView, TouchableWithoutFeedback } from "react-native";
+import { Tabs, usePathname } from "expo-router";
+import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
@@ -11,7 +11,6 @@ import AddTaskBottomSheet from "@/components/AddTaskBottomSheet";
 import { Group, Task } from "@/utils/customTypes";
 import { addHabit, addTask, getGroups } from "@/utils/taskService";
 import AddHabitBottomSheet from "@/components/AddHabitBotomSheet";
-
 
 export default function TabLayout() {
 
@@ -23,6 +22,10 @@ export default function TabLayout() {
   const [addHabitModalVisible, setAddHabitModalVisible] = useState(false);
   const [fetchGroups, setFetchGroups] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
+
+  // Get the current page path
+  const pagePath = usePathname();
+  //console.log(pagePath);
 
   useEffect(() => {
     // Fetch groups
@@ -38,8 +41,8 @@ export default function TabLayout() {
   };
 
   const handleMenuOption = (option: string) => {
-    console.log(option); // Handle the selected menu option
-    setMenuVisible(false); // Close the menu after selection
+    console.log(option);
+    setMenuVisible(false); // Close the menu
   };
 
   const handleAddTask = async (newTask: Task) => {
@@ -61,7 +64,10 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: styles.tabBarStyle,
+          tabBarStyle: {
+            ...styles.tabBarStyle,
+            display: pagePath === "/GroupOverview" ? "none" : 'flex',
+          },
           tabBarShowLabel: false,
           tabBarActiveTintColor: "black",
           tabBarInactiveTintColor: "#333",
@@ -85,7 +91,7 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="(tasks)"
+          name="(home)"
           options={{
             title: "Home",
             tabBarIcon: ({ focused }) => (
@@ -166,10 +172,10 @@ export default function TabLayout() {
 
 
       {/* Connecting Line */}
-      <View style={styles.connectorLine} />
+      <View style={[styles.connectorLine, {display: pagePath === "/GroupOverview" ? "none" : 'flex'}]} />
 
       {/* Floating "+" Button */}
-      <TouchableOpacity style={styles.floatingButton} onPress={toggleMenu}>
+      <TouchableOpacity style={[styles.floatingButton, {display: pagePath === "/GroupOverview" ? "none" : 'flex'}]} onPress={toggleMenu}>
         <AntDesign name="pluscircle" size={45} color="black" />
       </TouchableOpacity>
 

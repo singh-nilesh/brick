@@ -71,6 +71,8 @@ const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListIt
                             { color: item.status ? 'grey' : 'black' },
                             { textDecorationLine: item.status ? 'line-through' : 'none' },
                         ]}
+                        numberOfLines={1} // Ensures single-line text
+                        ellipsizeMode="tail" // Adds "..." if text overflows
                     >
                         {item.title}
                     </Text>
@@ -95,7 +97,7 @@ const styles = StyleSheet.create({
     },
     taskTitle: {
         fontFamily: 'InterSemi',
-        fontSize: 20,
+        fontSize: 18,
         color: 'black',
         flex: 1,
         paddingRight: 40,

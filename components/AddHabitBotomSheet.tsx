@@ -22,7 +22,8 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
         dtStart: new Date(),
         dtEnd: new Date(),
         id: 0,
-        createdAt: new Date()
+        createdAt: new Date(),
+        referenceLink : null
     }
     const [newHabit, setNewHabit] = useState<Habit>(HabitInit);
 

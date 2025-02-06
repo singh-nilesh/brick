@@ -48,7 +48,6 @@ export interface Group {
     description?: string | null;
     bgColor: string;
     textColor: string;
-    newTaskCount: number;
 }
 
 export interface Habit {
@@ -60,5 +59,5 @@ export interface Habit {
     byWeekDay: number[];
     dtStart: Date;
     dtEnd: Date;
-
+    referenceLink: string | null;
 }
