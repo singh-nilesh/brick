@@ -542,3 +542,36 @@ export const addGroup = async (db: SQLiteDatabase, newGroup: Group, newHabits: H
         await insertQuery.finalizeAsync();
     }
 }
+
+// Delete Group -- this wont work you have to delete the references as well
+export const deleteGroup = async (db: SQLiteDatabase, groupId: number) => {
+
+    const getTaskId = await db.prepareAsync(`SELECT id FROM todos WHERE group_id = ?`);
+    const delGroupQuery = await db.prepareAsync(`DELETE FROM groups WHERE id = ?`);
+    const delHabitsQuery = await db.prepareAsync(`DELETE FROM habits WHERE group_id = ?`);
+    const delTasksQuery = await db.prepareAsync(`DELETE FROM todos WHERE group_id = ?`);
+
+    try {
+        // Delete references
+        const IdList = await (await getTaskId.executeAsync([groupId])).getAllAsync();
+        for (let Id of IdList as { id: number }[]) {
+            await db.execAsync(`DELETE FROM reference WHERE task_id = ${Id.id}`);
+        }
+
+        // Delete tasks, habits and group 
+        await delHabitsQuery.executeAsync([groupId]);
+        await delTasksQuery.executeAsync([groupId]);
+        await delGroupQuery.executeAsync([groupId]);
+        
+        ToastAndroid.show('Group deleted successfully', ToastAndroid.SHORT);
+    }
+    catch (error) {
+        console.error("Error deleting group:", error);
+        ToastAndroid.show('Unable to delete group', ToastAndroid.SHORT);
+    }
+    finally {
+        await delGroupQuery.finalizeAsync();
+        await delHabitsQuery.finalizeAsync();
+        await delTasksQuery.finalizeAsync();
+    }
+}

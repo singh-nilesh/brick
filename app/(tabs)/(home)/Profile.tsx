@@ -1,12 +1,14 @@
-import React, { useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Pressable } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useFocusEffect, useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useSQLiteContext } from "expo-sqlite";
-import { getGroupOverview } from "@/utils/taskService";
+import { deleteGroup, getGroupOverview } from "@/utils/taskService";
 import JsonInput from "@/components/JsonInput";
 import JsonGuide from "@/components/JsonGuide";
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 
 const data = {
@@ -84,6 +86,8 @@ const Profile = () => {
   const [jsonGuideVisible, setJsonGuideVisible] = useState(false);
   const [groupList, setGroupList] = useState<GroupsProps[]>([]);
   const db = useSQLiteContext();
+  const [refreshDB, setRefreshDB] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<GroupsProps | null>(null);
 
   // Fetch groups
   const fetchGroups = async () => {
@@ -98,6 +102,10 @@ const Profile = () => {
     }, [db])
   );
 
+  useEffect(() => {
+      fetchGroups();
+    }, [activeGroup, refreshDB]);
+
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -108,20 +116,35 @@ const Profile = () => {
     setMenuVisible(false);
   };
 
+  const onDelete = async (grpId: number) => {
+    await deleteGroup(db, grpId);
+    setRefreshDB(!refreshDB);
+  };
+
 
   const renderGroup = ({ item }: { item: any }) => (
-    <View style={styles.card}>
+    <Swipeable
+      renderRightActions={() => (
+        <View style={{ flexDirection: 'row' }}>
+          <Pressable style={styles.deleteIcon} onPress={() => onDelete(item.id)}>
+            <MaterialCommunityIcons name="delete" size={27} color="black" />
+          </Pressable>
+        </View>
+      )}
+    >
+      <View style={styles.card}>
 
-      <View style={styles.cardContent}>
-        <Text style={styles.goalTitle}>{item.title}</Text>
-        <Text style={styles.details}>{item.description}</Text>
-      </View>
+        <View style={styles.cardContent}>
+          <Text style={styles.goalTitle}>{item.title}</Text>
+          <Text style={styles.details}>{item.description}</Text>
+        </View>
 
-      <View style={{ flexDirection: 'column', justifyContent: 'space-between', paddingHorizontal: 10 }}>
-        <Text style={styles.details}>Habits: {item.habitCount}</Text>
-        <Text style={styles.details}>Tasks {item.completedTask}/{item.taskCount}</Text>
+        <View style={{ flexDirection: 'column', justifyContent: 'space-between', paddingHorizontal: 10 }}>
+          <Text style={styles.details}>Habits: {item.habitCount}</Text>
+          <Text style={styles.details}>Tasks {item.completedTask}/{item.taskCount}</Text>
+        </View>
       </View>
-    </View>
+    </Swipeable>
   );
 
   return (
@@ -149,10 +172,10 @@ const Profile = () => {
       {menuVisible && (
         <View style={styles.floatingMenu}>
 
-          <AntDesign style={{ padding: 7 }} name="infocirlceo" size={24} color="black" onPress={() =>setJsonGuideVisible(true)} />
+          <AntDesign style={{ padding: 7 }} name="infocirlceo" size={24} color="black" onPress={() => setJsonGuideVisible(true)} />
 
           <TouchableOpacity style={styles.menuItem}
-            onPress={() => setJsonVisible(true)} 
+            onPress={() => setJsonVisible(true)}
           >
             <Text style={styles.menuText}>Paste JSON</Text>
           </TouchableOpacity>
@@ -173,14 +196,14 @@ const Profile = () => {
         <JsonInput
           isVisible={jsonVisible}
           onClose={() => setJsonVisible(false)}
-          
-            onSave={(jsonText) => {
-              router.push({
-                pathname: "/(home)/GroupOverview",
-                params: { data: JSON.stringify(jsonText) },
-              })
-              setJsonVisible(false)
-            }}
+
+          onSave={(jsonText) => {
+            router.push({
+              pathname: "/(home)/GroupOverview",
+              params: { data: JSON.stringify(jsonText) },
+            })
+            setJsonVisible(false)
+          }}
         />
       )}
 
@@ -225,6 +248,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
+    marginHorizontal: 5,
     padding: 10,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -271,6 +295,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "white",
   },
+  deleteIcon: {
+    backgroundColor: '#F8C4B4',
+    marginTop: 2,
+    marginBottom: 16,
+    borderEndEndRadius: 15,
+    borderTopEndRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+},
 });
 
 export default Profile;
