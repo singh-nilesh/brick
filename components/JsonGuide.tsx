@@ -62,57 +62,57 @@ template:
 
             <View style={styles.backdrop}>
 
-            <TouchableOpacity style={{flex:1}} onPress={onClose} />
+                <TouchableOpacity style={{ flex: 1 }} onPress={onClose} />
 
-            <View style={styles.modal}>
-                <Text style={styles.title}>How to use "Paste JSON"</Text>
-
-                <TextInput
-                    style={styles.input}
-                    value={goal}
-                    onChangeText={setGoal}
-                    placeholder="Enter your goal here"
-                />
-                <View style={{flexDirection:'row'}}>
-                    <Text style={{padding:10}}> No.of Habits to add: </Text>
+                <View style={styles.modal}>
+                    <Text style={styles.title}>How to use "Paste JSON"</Text>
 
                     <TextInput
-                    style={[styles.input, {width: 170}]}
-                    value={habitCount.toString()}
-                    inputMode='numeric'
-                    onChangeText={(text) => setHabitsCount(text ? parseInt(text) || 0 : 0)}
-                    placeholder="Enter Number of Habits you want to add"
-                />
+                        style={styles.input}
+                        value={goal}
+                        onChangeText={setGoal}
+                        placeholder="Enter your goal here"
+                    />
+                    <View style={{ flexDirection: 'row' }}>
+                        <Text style={{ padding: 10 }}> No.of Habits to add: </Text>
+
+                        <TextInput
+                            style={[styles.input, { width: 170 }]}
+                            value={habitCount.toString()}
+                            inputMode='numeric'
+                            onChangeText={(text) => setHabitsCount(text ? parseInt(text) || 0 : 0)}
+                            placeholder="Enter Number of Habits you want to add"
+                        />
+                    </View>
+
+                    <View style={{ flexDirection: 'row' }}>
+                        <Text style={{ padding: 10 }}> No.of Tasks to add: </Text>
+
+                        <TextInput
+                            style={[styles.input, { width: 170 }]}
+                            value={tasksCount.toString()}
+                            inputMode='numeric'
+                            onChangeText={(text) => setTasksCount(text ? parseInt(text) || 0 : 0)}
+                            placeholder="Enter Number of Tasks you want to add"
+                        />
+                    </View>
+
+                    <Text style={{ padding: 10 }}>
+                        Copy the contents and Paste it, as prompt to any AI model of your liking, Chat gpt,
+                        gemini, etc, then past the response in Paste JSON,
+                        to generate your road-map, and get started on your journey.
+
+                    </Text>
+
+                    <TouchableOpacity style={styles.copyButton} onPress={copyToClipboard}>
+                        <Feather name="copy" size={24} color="white" />
+                        <Text style={styles.buttonText}>Copy to Clipboard</Text>
+                    </TouchableOpacity>
+
+                    <ScrollView style={styles.textContainer}>
+                        <Text style={{ paddingBottom: 30 }}>{manualText}</Text>
+                    </ScrollView>
                 </View>
-
-                <View style={{flexDirection:'row'}}>
-                    <Text style={{padding:10}}> No.of Tasks to add: </Text>
-
-                    <TextInput
-                    style={[styles.input, {width: 170}]}
-                    value={tasksCount.toString()}
-                    inputMode='numeric'
-                    onChangeText={(text) => setTasksCount(text ? parseInt(text) || 0 : 0)}
-                    placeholder="Enter Number of Tasks you want to add"
-                />
-                </View>
-
-                <Text style={{padding:10}}>
-                    Copy the contents and Paste it, as prompt to any AI model of your liking, Chat gpt, 
-                    gemini, etc, then past the response in Paste JSON,
-                    to generate your road-map, and get started on your journey. 
-
-                </Text>
-
-                <TouchableOpacity style={styles.copyButton} onPress={copyToClipboard}>
-                    <Feather name="copy" size={24} color="white" />
-                    <Text style={styles.buttonText}>Copy</Text>
-                </TouchableOpacity>
-
-                <ScrollView style={styles.textContainer}>
-                    <Text style={{ paddingBottom: 30 }}>{manualText}</Text>
-                </ScrollView>
-            </View>
             </View>
         </Modal>
     );
