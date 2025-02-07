@@ -11,64 +11,6 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 
-const data = {
-  goal: "Become Data Scientist",
-  habits: [
-    {
-      title: "Practice Python programming",
-      weekDates: [1, 3, 5],
-      referenceLink: "https://realpython.com",
-    },
-    {
-      title: "Review data science concepts",
-      weekDates: [2, 4],
-      referenceLink: null,
-    },
-    {
-      title: "Participate in Kaggle competitions",
-      weekDates: [6],
-      referenceLink: "https://kaggle.com",
-    },
-  ],
-  tasks: [
-    {
-      title: "Install and set up Python and Jupyter",
-      dueDay_count_from_start: 1,
-      reference: "https://anaconda.com",
-    },
-    {
-      title: "Complete a Python for Data Science course",
-      dueDay_count_from_start: 7,
-      reference: "https://coursera.org",
-    },
-    {
-      title: "Learn Pandas and Numpy basics",
-      dueDay_count_from_start: 14,
-      reference: "https://datacamp.com",
-    },
-    {
-      title: "Complete an end-to-end data project",
-      dueDay_count_from_start: 21,
-      reference: null,
-    },
-    {
-      title: "Learn Matplotlib and Seaborn",
-      dueDay_count_from_start: 28,
-      reference: "https://matplotlib.org",
-    },
-    {
-      title: "Read articles on Machine Learning",
-      dueDay_count_from_start: 35,
-      reference: "https://medium.com",
-    },
-    {
-      title: "Build a data science portfolio",
-      dueDay_count_from_start: 42,
-      reference: null,
-    },
-  ],
-};
-
 interface GroupsProps {
   id: number;
   title: string;
@@ -152,7 +94,7 @@ const Profile = () => {
 
       {/* Back Button */}
       <AntDesign name="leftcircleo" size={30} color="black" style={styles.backButton}
-        onPress={() => router.push('/(home)/(tasks)/Today')}
+        onPress={() => router.back()}
       />
 
       {/* Header */}
@@ -181,10 +123,7 @@ const Profile = () => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}
-            onPress={() => router.push({
-              pathname: "/(home)/GroupOverview",
-              params: { data: JSON.stringify(data) },
-            })}
+            onPress={() => router.push("/(tabs)/(home)/FetchAiResponse")}
           >
             <Text style={styles.menuText}>AI generated</Text>
           </TouchableOpacity>
@@ -194,12 +133,12 @@ const Profile = () => {
       {/* JSON Input */}
       {jsonVisible && (
         <JsonInput
-          isVisible={jsonVisible}
+          isVisible={jsonVisible}     
           onClose={() => setJsonVisible(false)}
 
           onSave={(jsonText) => {
             router.push({
-              pathname: "/(home)/GroupOverview",
+              pathname: "/(tabs)/(home)/GroupOverview",
               params: { data: JSON.stringify(jsonText) },
             })
             setJsonVisible(false)
