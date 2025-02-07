@@ -152,7 +152,7 @@ const Profile = () => {
 
       {/* Back Button */}
       <AntDesign name="leftcircleo" size={30} color="black" style={styles.backButton}
-        onPress={() => router.push('/(home)/(tasks)/Today')}
+        onPress={() => router.back()}
       />
 
       {/* Header */}
@@ -182,7 +182,7 @@ const Profile = () => {
 
           <TouchableOpacity style={styles.menuItem}
             onPress={() => router.push({
-              pathname: "/(home)/GroupOverview",
+              pathname: "/(tabs)/(home)/GroupOverview",
               params: { data: JSON.stringify(data) },
             })}
           >
@@ -199,7 +199,7 @@ const Profile = () => {
 
           onSave={(jsonText) => {
             router.push({
-              pathname: "/(home)/GroupOverview",
+              pathname: "/(tabs)/(home)/GroupOverview",
               params: { data: JSON.stringify(jsonText) },
             })
             setJsonVisible(false)
