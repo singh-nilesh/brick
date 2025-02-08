@@ -56,6 +56,8 @@ export default function TabLayout() {
     setAddHabitModalVisible(false);
   };
 
+  const bottomTabBarVisible = ["/FetchAiResponse", "/Profile", "/GroupOverview", "/ExplorePage"].includes(pagePath) ? "none" : 'flex'
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
 
@@ -66,7 +68,7 @@ export default function TabLayout() {
           headerShown: false,
           tabBarStyle: {
             ...styles.tabBarStyle,
-            display: pagePath === "/GroupOverview" ? "none" : 'flex',
+            display: bottomTabBarVisible,
           },
           tabBarShowLabel: false,
           tabBarActiveTintColor: "black",
@@ -172,10 +174,10 @@ export default function TabLayout() {
 
 
       {/* Connecting Line */}
-      <View style={[styles.connectorLine, {display: pagePath === "/GroupOverview" ? "none" : 'flex'}]} />
+      <View style={[styles.connectorLine, {display: bottomTabBarVisible}]} />
 
       {/* Floating "+" Button */}
-      <TouchableOpacity style={[styles.floatingButton, {display: pagePath === "/GroupOverview" ? "none" : 'flex'}]} onPress={toggleMenu}>
+      <TouchableOpacity style={[styles.floatingButton, {display: bottomTabBarVisible}]} onPress={toggleMenu}>
         <AntDesign name="pluscircle" size={45} color="black" />
       </TouchableOpacity>
 

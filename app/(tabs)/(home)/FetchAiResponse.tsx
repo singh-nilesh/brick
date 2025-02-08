@@ -1,30 +1,24 @@
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ScrollView } from 'react-native-gesture-handler';
 
-interface FetchAiResponseProps {
-    isVisible: boolean;
-    onClose: () => void;
-}
-
-const FetchAiResponse = ({ isVisible, onClose }: FetchAiResponseProps) => {
+const FetchAiResponse = () => {
     const [goal, setGoal] = useState('');
     const [habitCount, setHabitsCount] = useState(2);
     const [tasksCount, setTasksCount] = useState(7);
     const [isLoading, setIsLoading] = useState(false);
-    const [isRegenerating, setIsRegenerating] = useState(false);
+    const [extraContent, setExtraContent] = useState('');
 
-    // init your Gemini Api
-    const geminiApiKey = process.env.GEMINI_API_KEY!;
-    console.log("api -->",geminiApiKey);
-
+    const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY!;
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     var promptText = `
         User's Goal: ${goal}.
+        Extra Context: ${extraContent}
         Generate:
         1. goal: mentioned above. ie. ${goal}.
         2. ${habitCount} habits that the user should follow weekly.
@@ -59,11 +53,7 @@ const FetchAiResponse = ({ isVisible, onClose }: FetchAiResponseProps) => {
             ],
             }  
         `;
-    if (isRegenerating) {
-        promptText = promptText + ` Regenerate an improved output, make it more structured and detailed.`;
-    }
 
-    // Function to send user message to Gemini
     const fetchResponse = async () => {
         if (!goal) {
             Alert.alert('Error', 'Please enter your goal.');
@@ -72,10 +62,17 @@ const FetchAiResponse = ({ isVisible, onClose }: FetchAiResponseProps) => {
 
         setIsLoading(true);
         try {
-            // call Gemini Api to get a response
             const result = await model.generateContent(promptText);
-            const response = JSON.parse(result.response.text());
-            console.log(response);      
+            const response = await result.response;
+            let textResponse = await response.text();
+
+            textResponse = textResponse.replace(/```json|```/g, "").trim();
+            const jsonData = JSON.parse(textResponse);
+
+            router.push({
+                pathname: "/(tabs)/(home)/GroupOverview",
+                params: { data: JSON.stringify(jsonData) },
+            });
 
         } catch {
             Alert.alert('Error', 'Failed to generate a plan. Please try again later.');
@@ -136,9 +133,29 @@ const FetchAiResponse = ({ isVisible, onClose }: FetchAiResponseProps) => {
                     placeholderTextColor="#888"
                 />
 
+                {/* Extra Content Input */}
+                <Text style={styles.label}> Extra Context about yourself</Text>
+                <TextInput
+                    style={[styles.input, { height: 100 }]}
+                    value={extraContent}
+                    onChangeText={setExtraContent}
+                    multiline={true}
+                    maxLength={100}
+                    placeholder="Optional, e.g., intermediate, student , etc."
+                    placeholderTextColor="#888"
+                />
+
                 {/* Generate Button */}
-                <TouchableOpacity style={styles.generateButton} onPress={fetchResponse}>
-                    <Text style={styles.buttonText}>Generate Plan</Text>
+                <TouchableOpacity
+                    style={[styles.generateButton, isLoading && styles.disabledButton]}
+                    onPress={fetchResponse}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                        <Text style={styles.buttonText}>Generate Plan</Text>
+                    )}
                 </TouchableOpacity>
             </ScrollView>
         </View>
@@ -198,6 +215,9 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
         marginTop: 10,
+    },
+    disabledButton: {
+        backgroundColor: '#555', // Darker grey when disabled
     },
     buttonText: {
         color: 'white',

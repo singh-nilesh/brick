@@ -1,11 +1,11 @@
 import React, { useCallback, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, ActivityIndicator, ScrollView, SectionList } from "react-native";
 import WebView from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import WebViewContainer from "@/components/WebViewContainer";
 import { useSQLiteContext } from "expo-sqlite";
 import { getRefLinks } from "@/utils/taskService";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 interface RefLinkProps {
     task_id: number,
@@ -14,11 +14,45 @@ interface RefLinkProps {
     ref_url: string
 }
 
+interface BookmarksProps {
+    id: number,
+    title: string,
+    url: string
+}
+
+const titles = [
+    { id: 1, title: "Google", url: "https://www.google.com" },
+    { id: 2, title: "LinkedIn", url: "https://www.linkedin.com" },
+    { id: 3, title: "Glassdoor", url: "https://www.glassdoor.com" },
+    { id: 4, title: "Internshala", url: "https://internshala.com" },
+    { id: 5, title: "Indeed", url: "https://www.indeed.com" },
+    { id: 6, title: "Monster", url: "https://www.monster.com" },
+    { id: 7, title: "Naukri", url: "https://www.naukri.com" },
+    { id: 8, title: "TimesJobs", url: "https://www.timesjobs.com" },
+    { id: 9, title: "Shine", url: "https://www.shine.com" },
+    { id: 10, title: "SimplyHired", url: "https://www.simplyhired.com" },
+    { id: 11, title: "CareerBuilder", url: "https://www.careerbuilder.com" },
+    { id: 12, title: "ZipRecruiter", url: "https://www.ziprecruiter.com" },
+    { id: 13, title: "Upwork", url: "https://www.upwork.com" },
+    { id: 14, title: "Freelancer", url: "https://www.freelancer.com" },
+    { id: 15, title: "Fiverr", url: "https://www.fiverr.com" },
+    { id: 16, title: "Toptal", url: "https://www.toptal.com" },
+    { id: 17, title: "Guru", url: "https://www.guru.com" },
+    { id: 18, title: "99Designs", url: "https://www.99designs.com" },
+    { id: 19, title: "AngelList", url: "https://www.angel.co" },
+    { id: 20, title: "Aquent", url: "https://aquent.com" },
+    { id: 21, title: "Crowded", url: "https://www.crowded.com" },
+    { id: 22, title: "Dice", url: "https://www.dice.com" },
+    { id: 23, title: "FlexJobs", url: "https://www.flexjobs.com" },
+    { id: 24, title: "GitHub Jobs", url: "https://jobs.github.com" },
+];
+
 const WebFeeds = () => {
     const [currentUrl, setCurrentUrl] = useState("https://www.google.com");
     const webViewRef = useRef<WebView>(null);
 
     const [refList, setRefList] = useState<RefLinkProps[]>([]);
+    const [bookmarks, setBookmarks] = useState<BookmarksProps[]>([]);
     const [canGoBack, setCanGoBack] = useState(false);
     const [canGoForward, setCanGoForward] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
@@ -26,7 +60,7 @@ const WebFeeds = () => {
 
     // Fetch refs for the database
     const fetchRefs = async () => {
-        const refs = await getRefLinks(db, new Date(), new Date(Date.now() + 5 * 24 * 60 * 60 * 1000));
+        const refs = await getRefLinks(db, new Date(), new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
         setRefList(refs);
     };
 
@@ -57,15 +91,112 @@ const WebFeeds = () => {
         setCanGoForward(navState.canGoForward);
     };
 
-    const titles = [
-        { id: "1", title: "Google", url: "https://www.google.com" },
-        { id: "2", title: "LinkedIn", url: "https://www.linkedin.com" },
-        { id: "3", title: "Glassdoor", url: "https://www.glassdoor.com" },
-        { id: "4", title: "Internshala", url: "https://internshala.com" },
-    ];
+    // Inside renderSideDrawer function
+    const renderSideDrawer = () => {
+        const sections = [
+            { title: "Bookmarks", data: bookmarks.map(item => ({ ...item, type: "bookmark" })) },
+            {
+                title: "Task References", data: refList.map(item => ({
+                    ...item,
+                    type: "ref",
+                    id: item.task_id,
+                    title: item.ref_name,
+                    url: item.ref_url,
+                    task_title: item.task_title
+                }))
+            },
+        ];
+
+        return (
+            <Modal
+                visible={isDrawerOpen}
+                animationType='none'
+                transparent={true}
+                onRequestClose={() => setIsDrawerOpen(false)}
+            >
+                <View style={styles.backdrop}>
+                    <View style={styles.drawerContent}>
+                        <Text style={{ paddingBottom: 30, fontSize: 25 }}>Menu</Text>
+
+                        {/* Explore page */}
+                        <TouchableOpacity
+                            style={[styles.drawerItem, { padding: 10, flexDirection: "row" }]}
+                            onPress={() => router.push("/ExplorePage")}
+                        >
+                            <Ionicons name="library-outline" size={24} color="black" style={{ paddingHorizontal: 10 }} />
+                            <Text style={styles.drawerTitle}>Explore</Text>
+                        </TouchableOpacity>
+
+                        {/* SectionList for Bookmarks & Websites */}
+                        <SectionList
+                            scrollEnabled={true}
+                            sections={sections}
+                            keyExtractor={(item, index) => item.url + index}
+                            renderSectionHeader={({ section: { title } }) => (
+                                <Text style={styles.drawerTitle}>{title}</Text>
+                            )}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={[
+                                        styles.drawerItem,
+                                        currentUrl === item.url && { backgroundColor: "black" },
+                                    ]}
+                                    onPress={() => handleGo(item.url)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.drawerItemText,
+                                            currentUrl === item.url && { color: "white" },
+                                        ]}
+                                        numberOfLines={1} // Ensures single-line text
+                                        ellipsizeMode="tail"
+                                    >
+                                        {item.title}
+                                    </Text>
+
+                                    {/* Display task title if it exists, for References */}
+                                    {"task_title" in item && (
+                                        <Text
+                                            numberOfLines={1} // Ensures single-line text
+                                            ellipsizeMode="tail"
+                                            style={{ fontSize: 12, color: "grey", paddingLeft: 20 }}>
+                                            {item.task_title as string}
+                                        </Text>
+                                    )}
+                                </TouchableOpacity>
+                            )}
+
+                            contentContainerStyle={{ paddingVertical: 10 }}
+
+                            renderSectionFooter={({ section }) => {
+                                if (section.title === 'Bookmarks' && section.data.length === 0) {
+                                    return (
+                                        <View style={{ alignItems: 'center', height: 100, justifyContent: 'center' }}>
+                                            <Text>No Bookmarks added</Text>
+                                        </View>
+                                    );
+                                }
+                                else if (section.title === 'Task References' && section.data.length === 0) {
+                                    return (
+                                        <View style={{ alignItems: 'center', height: 100, justifyContent: 'center' }}>
+                                            <Text>No reference available for a week</Text>
+                                        </View>
+                                    );
+                                } else {
+                                    return <View style={{ height: 40 }} />;
+                                }
+                            }}
+                        />
+                    </View>
+                    <TouchableOpacity style={{ flex: 1 }} onPress={() => setIsDrawerOpen(false)} />
+                </View>
+            </Modal>
+        );
+    };
 
     return (
         <View style={{ flex: 1 }}>
+
             {/* Top Navigation */}
             <View style={styles.container}>
                 <TouchableOpacity
@@ -76,7 +207,10 @@ const WebFeeds = () => {
                 </TouchableOpacity>
 
                 <View style={styles.urlContainer}>
-                    <Text>{currentUrl}</Text>
+                    <Text
+                        numberOfLines={1} // Ensures single-line text
+                        ellipsizeMode="tail"
+                    >{currentUrl}</Text>
                 </View>
 
                 <TouchableOpacity
@@ -118,42 +252,9 @@ const WebFeeds = () => {
                 )}
             />
 
-            {/* Side Drawer */}
-            <Modal
-                visible={isDrawerOpen}
-                animationType='none'
-                transparent={true}
-                onRequestClose={() => setIsDrawerOpen(false)}
-            >
-                <View style={styles.backdrop}>
-                    <View style={styles.drawerContent}>
-                        <Text style={styles.drawerTitle}>Select a Website</Text>
-                        <FlatList
-                            data={refList}
-                            keyExtractor={(item) => item.task_id.toString()}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={[styles.drawerItem,
-                                    currentUrl === item.ref_url && { backgroundColor: "black" },
-                                    ]}
-                                    onPress={() => {
-                                        handleGo(item.ref_url);
-                                    }}
-                                >
-                                    <Text style={[styles.drawerItemText, currentUrl === item.ref_url && { color: "white" }]}>
-                                        {item.ref_name}
-                                    </Text>
-                                    <Text style={{fontSize:12, color:"grey", paddingLeft:20}}>{item.task_title}</Text>
-                                </TouchableOpacity>
-                            )}
-                        />
-                    </View>
-                    <TouchableOpacity
-                        style={{ flex: 1 }}
-                        onPress={() => setIsDrawerOpen(false)}
-                    />
-                </View>
-            </Modal>
+            {/* Side Drawer */
+                renderSideDrawer()}
+
         </View>
     );
 };
