@@ -6,6 +6,7 @@ const _layout = () => {
     <Stack>
         <Stack.Screen name="WebFeeds" options={{headerShown:false}} />
         <Stack.Screen name="ExplorePage" options={{headerShown:false}} />
+        <Stack.Screen name="AddPost" options={{headerShown:false}} />
     </Stack>
   )
 }
