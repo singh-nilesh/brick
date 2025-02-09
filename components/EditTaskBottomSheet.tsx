@@ -179,14 +179,6 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                     </View>
                     <ReferenceLinks links={editedTask.references} isEditing={isEditing} onRemove={(id, name) => handelRemoveLink(id, name)} />
 
-
-                    {/* Progress */}
-                    <View style={{ flexDirection: 'column', gap: 10 }}>
-                        <Text style={styles.subHeader}>Aim Progress </Text>
-                        <Text style={{ color: 'grey' }}>30% completed</Text>
-                        <Progress.Bar progress={0.3} width={300} animated={true} color='grey' />
-                    </View>
-
                     {/* Save Button */}
                     {isEditing ? (
                         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>

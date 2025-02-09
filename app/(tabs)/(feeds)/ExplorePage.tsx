@@ -1,80 +1,153 @@
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { AntDesign, FontAwesome } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { Firestore_db } from '@/firebaseConfig';
+
+interface PostProps {
+  id: string;
+  context: string;
+  roadmap: string;
+  image: string;
+  profileImage: string;
+  userId: string;
+  likes: string[]; // array of user IDs
+}
 
 const ExplorePage = () => {
+  const { user, isSignedIn } = useUser();
   const [search, setSearch] = useState('');
-  const [posts, setPosts] = useState<{ id: string; title: string; content: string; likes: number }[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<{ id: string; title: string; content: string; likes: number }[]>([]);
+  const [posts, setPosts] = useState<PostProps[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<PostProps[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    // Fetch posts from the backend (replace with your data source)
-    const fetchPosts = async () => {
-      const fetchedPosts = [
-        { id: '1', title: 'Morning Routine', content: 'Start your day with a run!', likes: 5 },
-        { id: '2', title: 'Productivity Hacks', content: 'Use Pomodoro technique!', likes: 8 },
-      ];
+  const fetchPosts = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(Firestore_db, 'posts'));
+      const fetchedPosts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as PostProps[];
+
       setPosts(fetchedPosts);
       setFilteredPosts(fetchedPosts);
-    };
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.push('/LandingPage');
+    }
     fetchPosts();
-  }, []);
+  }, [isSignedIn]);
 
   const handleSearch = (text: string) => {
     setSearch(text);
-    const filtered = posts.filter(post => post.title.toLowerCase().includes(text.toLowerCase()));
+    const filtered = posts.filter((post) =>
+      post.context.toLowerCase().includes(text.toLowerCase())
+    );
     setFilteredPosts(filtered);
   };
 
-  const handleLike = (postId: string) => {
-    setFilteredPosts(prev => prev.map(post => 
-      post.id === postId ? { ...post, likes: post.likes + 1 } : post
-    ));
+  const handleLike = async (postId: string, likes: string[]) => {
+    if (!user) return;
+
+    const postRef = doc(Firestore_db, 'posts', postId);
+    const isLiked = likes.includes(user.id);
+    const updatedLikes = isLiked ? likes.filter((id) => id !== user.id) : [...likes, user.id];
+
+    try {
+      await updateDoc(postRef, { likes: updatedLikes });
+
+      setFilteredPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId ? { ...post, likes: updatedLikes } : post
+        )
+      );
+    } catch (error) {
+      console.error('Error updating likes:', error);
+    }
   };
 
-  const renderItem = ({ item }: { item: { id: string; title: string; content: string; likes: number } }) => (
-    <View style={styles.postContainer}>
-      <Text style={styles.postTitle}>{item.title}</Text>
-      <Text style={styles.postContent}>{item.content}</Text>
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchPosts();
+    setRefreshing(false);
+  }, []);
 
-      <View style={styles.postActions}>
-        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}   
-        onPress={() => handleLike(item.id)}>
-          <FontAwesome name="thumbs-up" size={20} color="blue" />
-          <Text>{item.likes}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <FontAwesome name="comment" size={20} color="gray" />
-        </TouchableOpacity>
+  const renderPosts = ({ item }: { item: PostProps }) => {
+    // Ensure likes is always an array
+    const likesArray = Array.isArray(item.likes) ? item.likes : [];
+    const isLikedByUser = user ? likesArray.includes(user.id) : false;
+
+    return (
+      <View style={styles.postContainer}>
+        <View style={styles.userInfo}>
+          <Text>{item.userId}</Text>
+        </View>
+
+        <Text style={styles.postContent}>{item.context}</Text>
+
+        <View style={styles.postActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleLike(item.id, likesArray)}
+          >
+            <FontAwesome name="thumbs-up" size={20} color={isLikedByUser ? 'blue' : 'grey'} />
+            <Text>{likesArray.length}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionButton, {
+            borderColor: '#ccc',
+            borderWidth: 1,
+            borderRadius: 10,
+          }]} 
+          onPress={() => {
+            console.log(item.roadmap);
+            router.push({
+              pathname: "/GroupOverview",
+              params: { data: item.roadmap },
+            })
+          }}>
+            <Text style={{paddingVertical:3, paddingHorizontal:10}}>See Roadmap</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* Back Button */}
       <TouchableOpacity onPress={() => router.back()}>
         <AntDesign name="leftcircleo" size={30} color="black" />
       </TouchableOpacity>
 
-      {/* Explore Title */}
-      <Text style={{alignSelf:'center', fontSize:25, }}>Explore</Text>
-      
-      {/* Search Bar */}
+      <Text style={styles.title}>Explore</Text>
+
       <TextInput
         style={styles.searchBar}
         placeholder="Search posts..."
         value={search}
         onChangeText={handleSearch}
       />
-      
-      {/* Posts List */}
+
       <FlatList
         data={filteredPosts}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        renderItem={renderPosts}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
+
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => router.push('/AddPost')}
+      >
+        <MaterialIcons name="add" size={30} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -86,6 +159,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     backgroundColor: '#fff',
+  },
+  title: {
+    alignSelf: 'center',
+    fontSize: 25,
   },
   searchBar: {
     borderWidth: 1,
@@ -99,9 +176,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ddd',
   },
-  postTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   postContent: {
     fontSize: 14,
@@ -109,9 +187,21 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   postActions: {
-    paddingHorizontal: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  actionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'black',
+    padding: 15,
+    borderRadius: 30,
   },
 });

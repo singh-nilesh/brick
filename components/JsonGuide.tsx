@@ -28,7 +28,7 @@ Habits:
 
 Tasks:
 - Include a title and the due date (as a day count from start).
-- Optionally include a reference link.
+- Optionally include a list of reference link.
 
 Return the output as a JSON object.
 note: use double-quotes for string values, "".
@@ -46,7 +46,10 @@ template:
         {
         title: "task title",
         dueDay_count_from_start: 1,
-        reference: null,
+        reference: [
+        { "id": 1, "name": "Real Python", "url": "https://realpython.com" },
+        { "id": 2, "name": "only Python", "url": "https://realpython.com" },
+        ],
         },
     ],
     }  

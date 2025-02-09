@@ -2,7 +2,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { format, isPast, isToday, set } from 'date-fns';
 import { Group, Task } from '@/utils/customTypes';
-import { getGroups, getTasksByGroup, updateTask } from '@/utils/taskService';
+import { getGroups, getFullGroup, updateTask } from '@/utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
 import TaskBottomSheet from '@/components/EditTaskBottomSheet';
 import { useFocusEffect } from 'expo-router';
@@ -36,8 +36,8 @@ const Progress = () => {
 
   const fetchTasks = async () => {
     if (activeGroup) {
-      const tasks = await getTasksByGroup(db, activeGroup);
-      setTasks(tasks);
+      const group = await getFullGroup(db, activeGroup);
+      setTasks(group.goalTasks);
     }
   };
 
@@ -131,6 +131,8 @@ const Progress = () => {
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={() => setRefreshDB(!refreshDB)} />
           }
+
+          ListFooterComponent={<View style={{ height: 100 }} />} // Add padding to the bottom
         />
       </View>
 

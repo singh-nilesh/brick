@@ -19,7 +19,7 @@ interface HabitProps {
 interface TaskProps {
     title: string;
     dueDay_count_from_start: number;
-    reference: string | null;
+    reference: { id: number, name: string, url: string }[] | [];
 }
 
 const GroupOverview = () => {
@@ -42,7 +42,7 @@ const GroupOverview = () => {
     // Map data to Group, Habit, and Tasks objects
     const mappedGroup: Group = {
         id: 0,
-        title: 'New Roadmap',
+        title: data.goal,
         description: data.goal,
         bgColor: '#D1F8EF',
         textColor: '#000000',
@@ -72,7 +72,7 @@ const GroupOverview = () => {
         deletedAt: null,
         group: null,
         habit: null,
-        references: task.reference ? [{ id: 0, name: 'init reference', url: task.reference }] : [],
+        references: task.reference ? task.reference : [],
         priority: 5, // Default priority value
     }));
 
@@ -138,28 +138,43 @@ const GroupOverview = () => {
         </View>
     );
 
-    // Render task component (Updated)
+    // Render task component
     const renderTask = (task: Task, index: number) => (
+
+        // Task Title
         <View style={styles.itemContainer} key={`task-${index}`}>
             <Text style={styles.itemText}>{task.title}</Text>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                {task.references.length > 0 ? (
-                    <TouchableOpacity onPress={() => Linking.openURL(task.references[0].url)}>
-                        <Text style={styles.linkText}>Reference</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <Text style={styles.linkText}></Text>
-                )}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
 
+                {/* Task References */}
+                <View style={{ flexDirection: 'column', flex: 1 }}>
+                    {task.references.length > 0 ? (
+
+                        task.references.map((ref, refIndex) => (
+                            <TouchableOpacity key={`ref-${index}-${refIndex}`} onPress={() => Linking.openURL(ref.url)}>
+                                <Text style={styles.linkText}
+                                    numberOfLines={1} ellipsizeMode='tail'
+                                >{ref.id}. {ref.name}</Text>
+                            </TouchableOpacity>
+                        ))
+                    ) : (
+                        <Text style={styles.linkText}>No References</Text>
+                    )}
+                </View>
+
+                {/* Due Date */}
                 <TouchableOpacity onPress={() => openDatePicker(index)}>
                     <Text style={{ fontSize: 11, color: '#D2665A', fontWeight: 'bold' }}>
-                        {task.dueAt ? format(new Date(task.dueAt), 'MMM dd') : 'No due date'}
+                        {task.dueAt
+                            ? `Due in ${Math.ceil((task.dueAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days`
+                            : 'No due date'}
                     </Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
+
 
 
     return (
@@ -259,7 +274,7 @@ const styles = StyleSheet.create({
     },
     linkText: {
         fontSize: 14,
-        width: 120,
+        paddingEnd: 10,
         color: '#007BFF',
         marginTop: 4,
     },
