@@ -36,7 +36,7 @@ const WebFeeds = () => {
     const [bookmarks, setBookmarks] = useState<BookmarksProps[]>(titles);
     const [canGoBack, setCanGoBack] = useState(false);
     const [canGoForward, setCanGoForward] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const db = useSQLiteContext();
 
     // Fetch refs for the database
@@ -102,7 +102,9 @@ const WebFeeds = () => {
                         {/* Explore page */}
                         <TouchableOpacity
                             style={[styles.drawerItem, { padding: 10, flexDirection: "row" }]}
-                            onPress={() => router.push("/ExplorePage")}
+                            onPress={() => {
+                                setIsDrawerOpen(false);
+                                router.push("/ExplorePage")}}
                         >
                             <Ionicons name="library-outline" size={24} color="black" style={{ paddingHorizontal: 10 }} />
                             <Text style={styles.drawerTitle}>Explore</Text>

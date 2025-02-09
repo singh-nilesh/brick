@@ -261,8 +261,8 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 
 
 
-// get task by group PROGRESS PAGE
-export const getTasksByGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
+// get tasks & habits by group ->  PROGRESS PAGE
+export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
     const todoQuery = await db.prepareAsync(
         `SELECT * FROM todos WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
     );
@@ -299,9 +299,18 @@ export const getTasksByGroup = async (db: SQLiteDatabase, selectedGroup: Group) 
                 return data;
             })
         );
+        const goalTasks = taskDetails.map(mapDBToTask);
 
-        // return mapped task.
-        return taskDetails.map(mapDBToTask);
+        // Fetch habits
+        const habitQuery = await db.prepareAsync(`SELECT * FROM habits WHERE group_id = $groupId`);
+        const habits = await habitQuery.executeAsync({ $groupId: selectedGroup.id });
+        const habitRows = await habits.getAllAsync();
+        const habitList = habitRows.map(mapDBToHabit);
+
+
+        // Return Group
+        return { goalTasks, habitList };
+
     } catch (error) {
         console.error("Error fetching tasks:", error);
         throw error;
@@ -562,7 +571,7 @@ export const deleteGroup = async (db: SQLiteDatabase, groupId: number) => {
         await delHabitsQuery.executeAsync([groupId]);
         await delTasksQuery.executeAsync([groupId]);
         await delGroupQuery.executeAsync([groupId]);
-        
+
         ToastAndroid.show('Group deleted successfully', ToastAndroid.SHORT);
     }
     catch (error) {

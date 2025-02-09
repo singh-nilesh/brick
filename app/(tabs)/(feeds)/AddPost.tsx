@@ -1,18 +1,82 @@
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { fs_storage, Firestore_db } from '@/firebaseConfig';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from '@clerk/clerk-expo';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { Group, Task, Habit } from '@/utils/customTypes';
+import { getFullGroup, getGroups } from '@/utils/taskService';
+import { useSQLiteContext } from 'expo-sqlite';
 
 const AddPost = () => {
     const { user } = useUser();
     const [context, setContext] = useState('');
-    const [roadmap, setRoadmap] = useState('');
     const [image, setImage] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [groupList, setGroupList] = useState<Group[]>([]);
+    const [groupDetail, setGroupDetail] = useState<{ goalTasks: Task[]; habitList: Habit[] } | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+    const db = useSQLiteContext();
+
+
+    const fetchGroupList = async () => {
+        const todo_list = (await getGroups(db)) as Group[];
+        setGroupList(todo_list);
+    };
+    // Hook to fetch Groups
+    useEffect(() => {
+        fetchGroupList();
+    }, []);
+
+
+    const fetchFullGroup = async (tempGroup: Group) => {
+        const result = await getFullGroup(db, tempGroup);
+        setGroupDetail(result);
+    }
+
+    useEffect(() => {
+        if (selectedGroup) {
+            fetchFullGroup(selectedGroup);
+        }
+    }, [selectedGroup]);
+
+
+    // Store the start date of the first habit in the group
+    const startDate = groupDetail?.habitList[0]?.dtStart
+        ? new Date(groupDetail.habitList[0].dtStart)
+        : null;
+
+    // Prepare the roadmap Json object
+    const roadmap = selectedGroup
+        ? {
+            goal: selectedGroup.title,
+            habits: groupDetail?.habitList.map((habit) => ({
+                title: habit.title,
+                weekDates: habit.byWeekDay,
+                referenceLink: habit.referenceLink || null,
+            })) || [],
+
+            tasks: groupDetail?.goalTasks.map((task) => {
+                const taskDueDate = task.dueAt ? new Date(task.dueAt) : null;
+                let dueDayCount = 1; // Default to 1 day
+
+                if (startDate && taskDueDate) {
+                    dueDayCount = Math.round(
+                        (taskDueDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
+                    );
+                }
+
+                return {
+                    title: task.title,
+                    dueDay_count_from_start: dueDayCount,
+                    reference: task.references || null,
+                };
+            }) || [],
+        }
+        : null;
+
 
     {/*
     const pickImage = async () => {
@@ -76,13 +140,13 @@ const AddPost = () => {
                 context,
                 contextImg: '',//imageUrl || '',
                 likes: [],
-                roadmap,
+                roadmap: JSON.stringify(roadmap),
                 postTime: serverTimestamp(),
             });
             Alert.alert('Success', 'Post published successfully');
             setContext('');
-            setRoadmap('');
             setImage(null);
+            router.back();
         } catch (error) {
             Alert.alert('Error', 'Something went wrong while posting');
             console.error(error);
@@ -105,12 +169,23 @@ const AddPost = () => {
                 onChangeText={setContext}
                 placeholder="What's on your mind?"
             />
-            <TextInput
-                style={styles.input}
-                value={roadmap}
-                onChangeText={setRoadmap}
-                placeholder="Enter roadmap (optional)"
-            />
+
+            <View>
+                <Text style={{ fontSize: 16, marginBottom: 10 }}>Select a Group</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    {groupList.map((group) => (
+                        <TouchableOpacity
+                            key={group.id}
+                            onPress={() => setSelectedGroup(group)}
+                            style={[styles.groupButton,
+                            { backgroundColor: selectedGroup?.id === group.id ? 'black' : '#CCC', }
+                            ]}>
+                            <Text style={{ color: selectedGroup?.id === group.id ? 'white' : 'black' }}>{group.title}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </View>
+
             <TouchableOpacity onPress={() => Alert.alert('Alert', 'Image picker pressed')} style={styles.imagePicker}>
                 <MaterialIcons name="add-a-photo" size={24} color="black" />
                 <Text>Pick an Image</Text>
@@ -169,6 +244,11 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         marginLeft: 10,
+    },
+    groupButton: {
+        padding: 10,
+        margin: 5,
+        borderRadius: 5
     },
 });
 

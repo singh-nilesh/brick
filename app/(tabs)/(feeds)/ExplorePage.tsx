@@ -101,8 +101,19 @@ const ExplorePage = () => {
             <Text>{likesArray.length}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
-            <Text>See Roadmap</Text>
+          <TouchableOpacity style={[styles.actionButton, {
+            borderColor: '#ccc',
+            borderWidth: 1,
+            borderRadius: 10,
+          }]} 
+          onPress={() => {
+            console.log(item.roadmap);
+            router.push({
+              pathname: "/GroupOverview",
+              params: { data: item.roadmap },
+            })
+          }}>
+            <Text style={{paddingVertical:3, paddingHorizontal:10}}>See Roadmap</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -178,7 +189,7 @@ const styles = StyleSheet.create({
   postActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
   },
   actionButton: {
     flexDirection: 'row',
