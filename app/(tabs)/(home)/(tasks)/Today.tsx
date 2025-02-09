@@ -74,6 +74,7 @@ const Today = () => {
   return (
     <View style={styles.container}>
       <SectionList
+      scrollEnabled={true}
         sections={sections}
         keyExtractor={(item) => (item.id.toString() + item.habit?.id.toString())}
         renderSectionHeader={({ section: { title } }) => (
@@ -97,7 +98,7 @@ const Today = () => {
               <Text >No tasks for today</Text>
             </View>
           ) : (
-            <View style={{ height: 50 }} />
+            <View style={{ height: 80 }} />
           )
         }
 

@@ -81,8 +81,10 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                         {editedTask.group && (
                             <Text style={[styles.tag, { backgroundColor: editedTask.group.bgColor }]}>{editedTask.group.title}</Text>
                         )}
-                        {editedTask.habit && (
-                            <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>{editedTask.habit.title}</Text>
+                        {editedTask.habit ? (
+                            <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>Habit {editedTask.habit.id}</Text>
+                        ):(
+                            <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>Task</Text>
                         )}
                     </View>
 

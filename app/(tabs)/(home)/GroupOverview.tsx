@@ -170,9 +170,12 @@ const GroupOverview = () => {
                     onPress={() => router.back()}
                 />
 
+                {/* Regenerate Button */}
+                {/*
                 <TouchableOpacity style={{ backgroundColor: 'white' }}>
                     <Text style={[styles.buttons, { color: 'black' }]}>regenerate</Text>
                 </TouchableOpacity>
+                */}
             </View>
             <ScrollView style={styles.container}>
                 <Text style={styles.goalTitle}>{group.description}</Text>
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 5,
+        paddingTop: 10,
         paddingHorizontal: 20,
         backgroundColor: 'white'
     },
