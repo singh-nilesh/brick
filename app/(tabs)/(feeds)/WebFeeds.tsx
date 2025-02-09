@@ -26,25 +26,6 @@ const titles = [
     { id: 3, title: "Glassdoor", url: "https://www.glassdoor.com" },
     { id: 4, title: "Internshala", url: "https://internshala.com" },
     { id: 5, title: "Indeed", url: "https://www.indeed.com" },
-    { id: 6, title: "Monster", url: "https://www.monster.com" },
-    { id: 7, title: "Naukri", url: "https://www.naukri.com" },
-    { id: 8, title: "TimesJobs", url: "https://www.timesjobs.com" },
-    { id: 9, title: "Shine", url: "https://www.shine.com" },
-    { id: 10, title: "SimplyHired", url: "https://www.simplyhired.com" },
-    { id: 11, title: "CareerBuilder", url: "https://www.careerbuilder.com" },
-    { id: 12, title: "ZipRecruiter", url: "https://www.ziprecruiter.com" },
-    { id: 13, title: "Upwork", url: "https://www.upwork.com" },
-    { id: 14, title: "Freelancer", url: "https://www.freelancer.com" },
-    { id: 15, title: "Fiverr", url: "https://www.fiverr.com" },
-    { id: 16, title: "Toptal", url: "https://www.toptal.com" },
-    { id: 17, title: "Guru", url: "https://www.guru.com" },
-    { id: 18, title: "99Designs", url: "https://www.99designs.com" },
-    { id: 19, title: "AngelList", url: "https://www.angel.co" },
-    { id: 20, title: "Aquent", url: "https://aquent.com" },
-    { id: 21, title: "Crowded", url: "https://www.crowded.com" },
-    { id: 22, title: "Dice", url: "https://www.dice.com" },
-    { id: 23, title: "FlexJobs", url: "https://www.flexjobs.com" },
-    { id: 24, title: "GitHub Jobs", url: "https://jobs.github.com" },
 ];
 
 const WebFeeds = () => {
@@ -52,7 +33,7 @@ const WebFeeds = () => {
     const webViewRef = useRef<WebView>(null);
 
     const [refList, setRefList] = useState<RefLinkProps[]>([]);
-    const [bookmarks, setBookmarks] = useState<BookmarksProps[]>([]);
+    const [bookmarks, setBookmarks] = useState<BookmarksProps[]>(titles);
     const [canGoBack, setCanGoBack] = useState(false);
     const [canGoForward, setCanGoForward] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
@@ -203,7 +184,7 @@ const WebFeeds = () => {
                     style={styles.iconContainer}
                     onPress={() => setIsDrawerOpen(true)}
                 >
-                    <Ionicons name="menu" size={24} color="black" />
+                    <Ionicons name="menu" size={25} color="black" />
                 </TouchableOpacity>
 
                 <View style={styles.urlContainer}>
