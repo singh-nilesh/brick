@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
 import axios from 'axios';
+import { useAuth } from '@clerk/clerk-expo'; // Clerk auth hook
 
 const FetchAiResponse = () => {
+    const { getToken } = useAuth(); // Get Clerk Auth token
     const [goal, setGoal] = useState('');
     const [habitCount, setHabitsCount] = useState(2);
     const [tasksCount, setTasksCount] = useState(7);
@@ -20,12 +22,19 @@ const FetchAiResponse = () => {
 
         setIsLoading(true);
         try {
-            const response = await axios.post("https://brick-backend-production.up.railway.app/generate-plan", {
-                goal,
-                habitCount,
-                tasksCount,
-                extraContent
-            });
+            const token = await getToken(); // Get Clerk JWT Token
+
+            const response = await axios.post("https://brick-backend-production.up.railway.app/generate-plan",
+                {
+                    goal,
+                    habitCount,
+                    tasksCount,
+                    extraContent
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` } // Send Clerk token
+                }
+            );
 
             router.push({
                 pathname: "/(tabs)/(home)/GroupOverview",
@@ -39,6 +48,7 @@ const FetchAiResponse = () => {
             setIsLoading(false);
         }
     };
+
 
     return (
         <View style={styles.modal}>
