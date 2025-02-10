@@ -186,12 +186,15 @@ const AddPost = () => {
                 </View>
             </View>
 
+{/*
             <TouchableOpacity onPress={() => Alert.alert('Alert', 'Image picker pressed')} style={styles.imagePicker}>
                 <MaterialIcons name="add-a-photo" size={24} color="black" />
                 <Text>Pick an Image</Text>
             </TouchableOpacity>
-
+            
             {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+*/}
+            
             <TouchableOpacity style={styles.postButton} onPress={handlePost} disabled={uploading}>
                 <Feather name="send" size={24} color="white" />
                 <Text style={styles.buttonText}>{uploading ? 'Uploading...' : 'Post'}</Text>

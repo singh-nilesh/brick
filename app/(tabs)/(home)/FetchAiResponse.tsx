@@ -2,8 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityInd
 import { AntDesign } from '@expo/vector-icons';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ScrollView } from 'react-native-gesture-handler';
+import axios from 'axios';
 
 const FetchAiResponse = () => {
     const [goal, setGoal] = useState('');
@@ -11,51 +11,6 @@ const FetchAiResponse = () => {
     const [tasksCount, setTasksCount] = useState(7);
     const [isLoading, setIsLoading] = useState(false);
     const [extraContent, setExtraContent] = useState('');
-
-    const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY!;
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    var promptText = `
-        User's Goal: ${goal}.
-        Extra Context: ${extraContent}
-        Generate:
-        1. goal: mentioned above. ie. ${goal}.
-        2. ${habitCount} habits that the user should follow weekly.
-        3. ${tasksCount} one-time tasks (milestones) to achieve the goal.
-        
-        Habits:
-        - Include a title and which days of the week it should be followed (0-6).
-        - Optionally include a reference link.
-        
-        Tasks:
-        - Include a title and the due date (as a day count from start).
-        - Optionally include a list of reference link.
-        
-        Return the output as a JSON object.
-        note: use double-quotes for string values, "".
-        template:
-        {
-          goal: "goal title",
-          habits: [
-            {
-              title: "habit title",
-              weekDates: [1, 3, 5],
-              referenceLink: "https://realpython.com",
-              },
-        ],
-            tasks: [
-                {
-                title: "task title",
-                dueDay_count_from_start: 1,
-                reference: [
-                { "id": 1, "name": "Real Python", "url": "https://realpython.com" },
-                { "id": 2, "name": "only Python", "url": "https://realpython.com" },
-                ],
-                },
-            ],
-            }  
-        `;
 
     const fetchResponse = async () => {
         if (!goal) {
@@ -65,19 +20,20 @@ const FetchAiResponse = () => {
 
         setIsLoading(true);
         try {
-            const result = await model.generateContent(promptText);
-            const response = await result.response;
-            let textResponse = await response.text();
-
-            textResponse = textResponse.replace(/```json|```/g, "").trim();
-            const jsonData = JSON.parse(textResponse);
+            const response = await axios.post("https://brick-backend-production.up.railway.app/generate-plan", {
+                goal,
+                habitCount,
+                tasksCount,
+                extraContent
+            });
 
             router.push({
                 pathname: "/(tabs)/(home)/GroupOverview",
-                params: { data: JSON.stringify(jsonData) },
+                params: { data: JSON.stringify(response.data) },
             });
 
-        } catch {
+        } catch (error) {
+            console.error("API Error:", error);
             Alert.alert('Error', 'Failed to generate a plan. Please try again later.');
         } finally {
             setIsLoading(false);
