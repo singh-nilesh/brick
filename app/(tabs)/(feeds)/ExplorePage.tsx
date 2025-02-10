@@ -107,7 +107,6 @@ const ExplorePage = () => {
             borderRadius: 10,
           }]} 
           onPress={() => {
-            console.log(item.roadmap);
             router.push({
               pathname: "/GroupOverview",
               params: { data: item.roadmap },

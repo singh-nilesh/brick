@@ -123,7 +123,7 @@ const GroupOverview = () => {
             {/* Habit Title */}
             <Text style={styles.itemText}>{habit.title}</Text>
 
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 {habit.referenceLink ? (
                     <TouchableOpacity onPress={() => habit.referenceLink && Linking.openURL(habit.referenceLink)}>
                         <Text style={styles.linkText}>Reference</Text>
