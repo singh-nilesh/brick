@@ -65,7 +65,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       
         CREATE TABLE IF NOT EXISTS reference (
            id INTEGER PRIMARY KEY,
-           task_id INTEGER NOT NULL REFERENCES todos(id),
+           task_id INTEGER REFERENCES todos(id),
            name TEXT NOT NULL,      
            url TEXT NOT NULL,
            created_at TEXT NOT NULL DEFAULT (DATE('now'))

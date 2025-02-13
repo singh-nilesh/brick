@@ -4,18 +4,33 @@ import { formatDateForDB } from "./dbUtils";
 import { Group, Habit, Task } from "./customTypes";
 import { ToastAndroid } from "react-native";
 
-
 // Function to insert references
-const insertReferences = async (db: SQLiteDatabase, taskId: number, references: any[]) => {
+export const insertReferences = async (db: SQLiteDatabase, taskId: number | null, references: any[]) => {
     const validReferences = references.filter(ref => ref.url && ref.url.trim() !== '');
     if (validReferences.length > 0) {
         const insertRef = await db.prepareAsync(`INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`);
         try {
             for (const ref of validReferences) {
-                await insertRef.executeAsync([taskId, ref.name, ref.url]);
+                taskId
+                ? await insertRef.executeAsync([taskId, ref.name, ref.url])
+                : await insertRef.executeAsync([null, ref.name, ref.url]);
             }
         } finally {
             await insertRef.finalizeAsync();
+        }
+    }
+}
+
+// Function to delete references
+export const deleteReferences = async (db: SQLiteDatabase, references: any[]) => {
+    if (references.length > 0) {
+        const delRefQuery = await db.prepareAsync(`DELETE FROM reference WHERE id = ?`);
+        try {
+            for (const ref of references) {
+                await delRefQuery.executeAsync([ref.id]);
+            }
+        } finally {
+            await delRefQuery.finalizeAsync();
         }
     }
 }
@@ -147,7 +162,6 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     }
     return [...tasks, ...dynamicTasks];
 };
-
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
@@ -373,16 +387,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
     const addRefs = newTask.references.filter((ref) => ref.id === null);
 
     // Delete references
-    if (delRefs.length > 0) {
-        const delRefQuery = await db.prepareAsync(`DELETE FROM reference WHERE id = ?`);
-        try {
-            delRefs.forEach(async (ref) => {
-                await delRefQuery.executeAsync([ref.id]);
-            });
-        } finally {
-            await delRefQuery.finalizeAsync();
-        }
-    }
+    await deleteReferences(db, delRefs);
 
     // Add references
     await insertReferences(db, oldTask.id, addRefs);
@@ -409,7 +414,6 @@ export const getGroups = async (db: SQLiteDatabase) => {
     }
 }
 
-
 // Add Habit
 export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
     const insertQuery = await db.prepareAsync(
@@ -425,7 +429,6 @@ export const addHabit = async (db: SQLiteDatabase, newHabit: Habit) => {
             formatDateForDB(newHabit.dtStart),
             formatDateForDB(newHabit.dtEnd),
             newHabit.referenceLink ?? null,
-
         ]);
     }
     finally {
@@ -455,18 +458,16 @@ export const getRefLinks = async (db: SQLiteDatabase, from: Date, to: Date) => {
         return refLinks.map((ref: any) => ({
             task_id: ref.task_id as number,
             task_title: ref.task_title as string,
-            ref_name: ref.ref_name as string,
-            ref_url: ref.ref_url as string,
+            name: ref.ref_name as string,
+            url: ref.ref_url as string,
         }));
     } finally {
         await refQuery.finalizeAsync();
     }
 }
 
-
 // get All group Summary,  User PROFILE PAGE
 export const getGroupOverview = async (db: SQLiteDatabase) => {
-
     // LEFT join + WHERE  ==> INNER JOIN, (use AND instead of WHERE)
     const groupsQuery = await db.prepareAsync(
         `SELECT
@@ -510,7 +511,6 @@ export const getGroupOverview = async (db: SQLiteDatabase) => {
         await groupsQuery.finalizeAsync();
     }
 }
-
 
 // Add Groups
 export const addGroup = async (db: SQLiteDatabase, newGroup: Group, newHabits: Habit[] | null, newTasks: Task[] | null) => {
@@ -557,7 +557,6 @@ export const addGroup = async (db: SQLiteDatabase, newGroup: Group, newHabits: H
 
 // Delete Group -- this wont work you have to delete the references as well
 export const deleteGroup = async (db: SQLiteDatabase, groupId: number) => {
-
     const getTaskId = await db.prepareAsync(`SELECT id FROM todos WHERE group_id = ?`);
     const delGroupQuery = await db.prepareAsync(`DELETE FROM groups WHERE id = ?`);
     const delHabitsQuery = await db.prepareAsync(`DELETE FROM habits WHERE group_id = ?`);
@@ -585,5 +584,24 @@ export const deleteGroup = async (db: SQLiteDatabase, groupId: number) => {
         await delGroupQuery.finalizeAsync();
         await delHabitsQuery.finalizeAsync();
         await delTasksQuery.finalizeAsync();
+    }
+}
+
+
+// fetch Bookmarks
+export const getBookmarks = async (db: SQLiteDatabase) => {
+    const bookmarkQuery = await db.prepareAsync(
+        `SELECT id, name, url FROM reference WHERE task_id IS NULL`
+    );
+    try {
+        const bookmarkRows = await bookmarkQuery.executeAsync();
+        const bookmarks = await bookmarkRows.getAllAsync();
+        return bookmarks.map((ref: any) => ({
+            id: ref.id as number,
+            name: ref.name as string,
+            url: ref.url as string,
+        }));
+    } finally {
+        await bookmarkQuery.finalizeAsync();
     }
 }
