@@ -5,11 +5,26 @@ import { Group, Habit, Task } from "./customTypes";
 import { ToastAndroid } from "react-native";
 
 
+// Function to insert references
+const insertReferences = async (db: SQLiteDatabase, taskId: number, references: any[]) => {
+    const validReferences = references.filter(ref => ref.url && ref.url.trim() !== '');
+    if (validReferences.length > 0) {
+        const insertRef = await db.prepareAsync(`INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`);
+        try {
+            for (const ref of validReferences) {
+                await insertRef.executeAsync([taskId, ref.name, ref.url]);
+            }
+        } finally {
+            await insertRef.finalizeAsync();
+        }
+    }
+}
+
 // Add Tasks
 export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
-
     const insertQuery = await db.prepareAsync(
-        `INSERT INTO todos (group_id, title, description, comment, priority, due_at, due_at_time, is_task) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+        `INSERT INTO todos (group_id, title, description, comment, priority, due_at, due_at_time, is_task) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    );
     var TaskId: number;
 
     try {
@@ -23,32 +38,18 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
                 newTask.dueAt ? formatDateForDB(newTask.dueAt) : null,
                 newTask.dueAtTime ?? null,
                 1,
-            ]))?.lastInsertRowId;
-    }
-    finally {
+            ])
+        )?.lastInsertRowId;
+    } finally {
         await insertQuery.finalizeAsync();
     }
 
     // Add references
-    // Fix: Ensure references are valid before inserting
-    const validReferences = newTask.references.filter(ref => ref.url && ref.url.trim() !== '');
-
-    if (validReferences.length > 0) {
-        const addRefQuery = await db.prepareAsync(
-            `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
-        );
-        try {
-            for (const ref of validReferences) {
-                await addRefQuery.executeAsync([TaskId, ref.name, ref.url]);
-            }
-        } finally {
-            await addRefQuery.finalizeAsync();
-        }
-    }
+    await insertReferences(db, TaskId, newTask.references);
 }
 
 // Generate Task Dynamically
-const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate: Date): Promise<any[]> => {
+const generateDynamicTasks = async (db: SQLiteDatabase, Habits: any[], dueDate: Date): Promise<any[]> => {
     if (Habits.length === 0) {
         return [];
     }
@@ -97,8 +98,17 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
                     deleted_at: null,
                     is_task: 1,
                     habit_id: habit.id,
-                    habitReferences: habit.referenceLink
-                        ? [{ id: null, name: 'Habit Reference', url: habit.referenceLink }]
+                    group: habit.groupId
+                        ? {
+                            group_title: habit.group_title,
+                            group_bgColor: habit.group_bgColor,
+                            group_textColor: habit.group_textColor,
+                        } : null,
+                    habit: {
+                        habit_title: habit.title,
+                    },
+                    references: habit.referenceLink && habit.referenceLink.length > 0
+                        ? [{ id: null, name: 'Habit Reference', url: habit.referenceLink.trim() }]
                         : [],
                 });
             }
@@ -109,7 +119,6 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: Habit[], dueDate
 
 // Merge tasks and dynamic tasks
 const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQLiteDatabase): Promise<any[]> => {
-
     dueAt.setHours(0, 0, 0, 0);
 
     // Insert dynamic tasks if the due date is today
@@ -117,10 +126,8 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
         const insertStmt = await db.prepareAsync(`INSERT INTO todos (title, group_id, due_at, habit_id, is_task, created_at)
                 VALUES ( $title, $groupId, $dueAt, $habitId, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`);
 
-        const insertRef = await db.prepareAsync(`INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`);
         try {
             for (const Task of dynamicTasks) {
-
                 let lastTaskId = await (await insertStmt.executeAsync({
                     $title: Task.title,
                     $groupId: Task.group_id,
@@ -128,13 +135,13 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
                     $habitId: Task.habit_id,
                 }))?.lastInsertRowId;
 
+                // Update the task id
+                dynamicTasks[dynamicTasks.indexOf(Task)].id = lastTaskId;
+
                 // Add references
-                if (Task.habitReferences.length > 0) {
-                    await insertRef.executeAsync([lastTaskId, Task.habitReferences[0].name, Task.habitReferences[0].url]);
-                }
+                await insertReferences(db, lastTaskId, Task.references);
             }
-        }
-        finally {
+        } finally {
             await insertStmt.finalizeAsync();
         }
     }
@@ -166,36 +173,42 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
         let dynamicTasks;
         let habitRows
 
-        const habitQuery = await db.prepareAsync(`SELECT * FROM habits`);
+        const habitQuery = await db.prepareAsync(
+            `SELECT habits.*, 
+                    groups.title AS group_title, groups.group_bgColor, groups.group_textColor
+            FROM habits 
+            LEFT JOIN groups 
+            ON habits.group_id = groups.id`);
         try {
             const habits = await habitQuery.executeAsync();
             habitRows = await habits.getAllAsync();
 
-            // Filter habits that are Due today
-            const HabitList = habitRows.map(mapDBToHabit).filter((habit) => {
-                if ((habit.dtEnd >= dueDate) &&
-                    (habit.dtStart <= dueDate) &&
-                    (habit.id && !tasks.some((task: any) => task.habit_id === habit.id))
-                ) return habit
-            });
-            if (HabitList.length > 0) {
-                dynamicTasks = await generateDynamicTasks(db, HabitList, dueDate);
-            }
-            else {
-                dynamicTasks = null;
-            }
+            // Filter habits that are Due today or already in DB
+            const HabitList = (habitRows as any[])
+                .map(habit => ({
+                    ...mapDBToHabit(habit), // Map habit-specific fields
+                    group_title: habit.group_title,
+                    group_bgColor: habit.group_bgColor,
+                    group_textColor: habit.group_textColor
+                }))
+                .filter(habit =>
+                    habit.dtEnd >= dueDate &&
+                    habit.dtStart <= dueDate &&
+                    habit.id && !tasks.some((task: any) => task.habit_id === habit.id)
+                );
+
+            // Generate dynamic tasks
+            (HabitList.length > 0)
+                ? (dynamicTasks = await generateDynamicTasks(db, HabitList, dueDate))
+                : dynamicTasks = null;
 
         } finally {
             await habitQuery.finalizeAsync();
         }
 
-        // Merge the static and dynamic tasks
-        var todoResult;
-        dynamicTasks ? todoResult = mergeTasks(tasks, dynamicTasks, dueDate, db) : todoResult = tasks;
-
         // Fetch task details
         const taskDetails = await Promise.all(
-            (await todoResult).map(async (row: any) => {
+            (await tasks).map(async (row: any) => {
                 let group = null;
                 let habit = null;
                 let references = null;
@@ -250,8 +263,11 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
             })
         );
 
+        // Merge tasks and dynamic tasks
+        const finalTasks = await mergeTasks(taskDetails, dynamicTasks ?? [], dueDate, db)
+
         // return mapped task.
-        return taskDetails.map(mapDBToTask);
+        return (await finalTasks).map(mapDBToTask);
 
     } catch (error) {
         console.error("Error fetching tasks:", error);
@@ -322,7 +338,6 @@ export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => 
 
 // Update Task
 export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Task) => {
-
     // compare old and new todo Entries
     if (oldTask.title !== newTask.title ||
         oldTask.status !== newTask.status ||
@@ -348,8 +363,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
                 oldTask.id,
             ]);
             console.log('Task updated successfully');
-        }
-        finally {
+        } finally {
             await updateStatement.finalizeAsync();
         }
     }
@@ -371,18 +385,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
     }
 
     // Add references
-    if (addRefs.length > 0) {
-        const addRefQuery = await db.prepareAsync(
-            `INSERT INTO reference (task_id, name, url) VALUES (?, ?, ?)`
-        );
-        try {
-            addRefs.forEach(async (ref) => {
-                await addRefQuery.executeAsync([oldTask.id, ref.name, ref.url]);
-            });
-        } finally {
-            await addRefQuery.finalizeAsync();
-        }
-    }
+    await insertReferences(db, oldTask.id, addRefs);
 }
 
 // get Group list

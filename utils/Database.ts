@@ -85,7 +85,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         const habit_groupId = (
             await db.runAsync(
                 'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-                'Habits',
+                'Daily Habits',
                 'Trial group 1',
                 '#AEEA94',
                 '#000000'
@@ -93,32 +93,14 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
         console.log('Group- Habits:', habit_groupId);
 
-        await db.runAsync(
-            'INSERT INTO groups (title, description, group_bgColor, group_textColor) VALUES (?, ?, ?, ?) RETURNING id',
-            'test1',
-            'Trial group 2',
-            '#77B254',
-            '#000000'
-        )
-
-        // habits
-        const habitId = (
-            await db.runAsync(
-                'INSERT INTO habits (title, group_id, interval, by_week_day, dt_start, dt_end) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
-                'Daily habits',  // title
-                habit_groupId,                // group_id: habits
-                1,                      // interval: 1
-                '[0,1,2,3,4,5,6]',      // by_day: empty array
-                formatDateForDB(new Date()),  // dt_start: current timestamp
-                formatDateForDB(new Date())   // dt_end: current timestamp
-            ))?.lastInsertRowId;
-
-
-        // todos
+        // Tasks
         const todoId = (
             await db.runAsync(
-                'INSERT INTO todos (title) VALUES (?) RETURNING id',
-                'Initial todo entry',  // title
+                'INSERT INTO todos (group_id, title, due_at, is_task) VALUES (?, ?, ?, ?) RETURNING id',
+                habit_groupId, 
+                'User manual',  // title
+                formatDateForDB(new Date()), // due_at
+                1 // is_task
             ))?.lastInsertRowId;
 
         if (todoId != null) {
@@ -130,20 +112,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
                 'https://docs.google.com/document/d/1d_TmPfLqCtashhviQN4AeTY6XV1kZyN4byTbltac-q4/edit?usp=sharing',
                 formatDateForDB(new Date())
             );
-        }
-
-
-        // first habit-task in todos
-        if (habitId != null) {
-            await db.runAsync(
-                'INSERT INTO todos (group_id, title, due_at, is_task, habit_id) VALUES (?, ?, ?, ?, ?)',
-                habit_groupId, //groups habits
-                'Daily habits', // title
-                formatDateForDB(new Date()), // due_at
-                1, // task
-                habitId // Foreign key linking to the habits table
-            );
-            console.log('Habit-task inserted');
         }
 
         // console.log('Tables created and initial data inserted');
