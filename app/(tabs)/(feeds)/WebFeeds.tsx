@@ -1,39 +1,34 @@
 import React, { useCallback, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, ActivityIndicator, ScrollView, SectionList } from "react-native";
+import { TextInput, View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, SectionList, Alert, Button } from "react-native";
 import WebView from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import WebViewContainer from "@/components/WebViewContainer";
 import { useSQLiteContext } from "expo-sqlite";
-import { getRefLinks } from "@/utils/taskService";
+import { deleteReferences, getBookmarks, getRefLinks, insertReferences } from "@/utils/taskService";
 import { router, useFocusEffect } from "expo-router";
+import { add } from "date-fns";
+
 
 interface RefLinkProps {
     task_id: number,
     task_title: string,
-    ref_name: string,
-    ref_url: string
+    name: string,
+    url: string
 }
 
 interface BookmarksProps {
     id: number,
-    title: string,
+    name: string,
     url: string
-}
-
-const titles = [
-    { id: 1, title: "Google", url: "https://www.google.com" },
-    { id: 2, title: "LinkedIn", url: "https://www.linkedin.com" },
-    { id: 3, title: "Glassdoor", url: "https://www.glassdoor.com" },
-    { id: 4, title: "Internshala", url: "https://internshala.com" },
-    { id: 5, title: "Indeed", url: "https://www.indeed.com" },
-];
+};
 
 const WebFeeds = () => {
     const [currentUrl, setCurrentUrl] = useState("https://www.google.com");
     const webViewRef = useRef<WebView>(null);
-
     const [refList, setRefList] = useState<RefLinkProps[]>([]);
-    const [bookmarks, setBookmarks] = useState<BookmarksProps[]>(titles);
+    const [bookmarks, setBookmarks] = useState<BookmarksProps[]>([]);
+    const [newBookmark, setNewBookmark] = useState('');
+    const [showAddBookmarkModal, setShowAddBookmarkModal] = useState(false);
     const [canGoBack, setCanGoBack] = useState(false);
     const [canGoForward, setCanGoForward] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -45,10 +40,17 @@ const WebFeeds = () => {
         setRefList(refs);
     };
 
+    // Fetch bookmarks from the database
+    const fetchBookmarks = async () => {
+        const result = await getBookmarks(db) as BookmarksProps[];
+        setBookmarks(result);
+    }
+
     // Hook to fetch refs from the database on page load
     useFocusEffect(
         useCallback(() => {
             fetchRefs();
+            fetchBookmarks();
         }, [db])
     );
 
@@ -70,22 +72,26 @@ const WebFeeds = () => {
     const handleNavigationStateChange = (navState: any) => {
         setCanGoBack(navState.canGoBack);
         setCanGoForward(navState.canGoForward);
+        setCurrentUrl(navState.url); // Update the state with the current page's URL
     };
+
+    const handleDelBookmark = async (item: any) => {
+        await deleteReferences(db, item);
+        fetchBookmarks();
+    }
+
+    const handelAddBookmark = async (newUrl: { name: string, url: string }) => {
+        await insertReferences(db, null, [newUrl]);
+        fetchBookmarks();
+    }
 
     // Inside renderSideDrawer function
     const renderSideDrawer = () => {
-        const sections = [
-            { title: "Bookmarks", data: bookmarks.map(item => ({ ...item, type: "bookmark" })) },
-            {
-                title: "Task References", data: refList.map(item => ({
-                    ...item,
-                    type: "ref",
-                    id: item.task_id,
-                    title: item.ref_name,
-                    url: item.ref_url,
-                    task_title: item.task_title
-                }))
-            },
+        type SectionData = BookmarksProps | RefLinkProps;
+
+        const sections: { title: string; data: SectionData[] }[] = [
+            { title: "Bookmarks", data: bookmarks },
+            { title: "Task References", data: refList },
         ];
 
         return (
@@ -104,7 +110,8 @@ const WebFeeds = () => {
                             style={[styles.drawerItem, { padding: 10, flexDirection: "row" }]}
                             onPress={() => {
                                 setIsDrawerOpen(false);
-                                router.push("/ExplorePage")}}
+                                router.push("/ExplorePage")
+                            }}
                         >
                             <Ionicons name="library-outline" size={24} color="black" style={{ paddingHorizontal: 10 }} />
                             <Text style={styles.drawerTitle}>Explore</Text>
@@ -134,7 +141,7 @@ const WebFeeds = () => {
                                         numberOfLines={1} // Ensures single-line text
                                         ellipsizeMode="tail"
                                     >
-                                        {item.title}
+                                        {item.name}
                                     </Text>
 
                                     {/* Display task title if it exists, for References */}
@@ -189,11 +196,25 @@ const WebFeeds = () => {
                     <Ionicons name="menu" size={25} color="black" />
                 </TouchableOpacity>
 
+
+                <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={() => setShowAddBookmarkModal(true)}
+                >
+                    <Ionicons name="star" size={20} 
+                    color = {
+                        bookmarks.some((item) => item.url === currentUrl) ? 'black' : 'lightgrey'
+                    } />
+                </TouchableOpacity>
+
                 <View style={styles.urlContainer}>
-                    <Text
-                        numberOfLines={1} // Ensures single-line text
-                        ellipsizeMode="tail"
-                    >{currentUrl}</Text>
+                    <TextInput
+                        style={styles.urlContainer}
+                        placeholder="Enter URL"
+                        value={currentUrl}
+                        onChangeText={setCurrentUrl}
+                        onSubmitEditing={() => handleGo(currentUrl)}
+                    />
                 </View>
 
                 <TouchableOpacity
@@ -219,6 +240,7 @@ const WebFeeds = () => {
                         color={canGoForward ? "black" : "grey"}
                     />
                 </TouchableOpacity>
+
             </View>
 
             {/* WebView */}
@@ -238,6 +260,37 @@ const WebFeeds = () => {
             {/* Side Drawer */
                 renderSideDrawer()}
 
+            {/* Add Bookmark Modal */}
+            {showAddBookmarkModal && (
+                <Modal transparent={true} animationType="fade" visible={showAddBookmarkModal}>
+                    <TouchableOpacity style={styles.linkModalBackdrop}
+                        onPress={() => {
+                            setShowAddBookmarkModal(false);
+                        }}>
+                        <View style={styles.linkModal}>
+                            <Text style={styles.linkText} numberOfLines={1} ellipsizeMode="tail"
+                            >URL: {currentUrl}</Text>
+
+                            <TextInput
+                                style={styles.modalInput}
+                                placeholder="Name"
+                                value={newBookmark}
+                                onChangeText={setNewBookmark}
+                            />
+
+                            <TouchableOpacity style={{ backgroundColor: 'black', padding: 10, borderRadius: 5 }}
+                                onPress={() => {
+                                    handelAddBookmark({ name: newBookmark, url: currentUrl });
+                                    setShowAddBookmarkModal(false);
+                                    setNewBookmark('');
+                                }}
+                            >
+                                <Text style={{ paddingHorizontal: 10, color: 'white', fontSize: 16 }}>Add Bookmark</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
+                </Modal>
+            )}
         </View>
     );
 };
@@ -254,15 +307,15 @@ const styles = StyleSheet.create({
         backgroundColor: "#e5e7eb",
     },
     iconContainer: {
-        padding: 8,
+        padding: 6,
     },
     urlContainer: {
         flex: 1,
+        fontSize: 15,
         flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
         backgroundColor: "#d1d5db",
-        padding: 8,
+        height: 35,
+        paddingHorizontal: 5,
         borderRadius: 8,
     },
 
@@ -292,5 +345,34 @@ const styles = StyleSheet.create({
     drawerItemText: {
         fontSize: 16,
         paddingLeft: 10,
+    },
+
+    linkModalBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    linkModal: {
+        width: '80%',
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    modalInput: {
+        width: '100%',
+        borderBottomWidth: 1,
+        borderColor: '#ccc',
+        marginBottom: 10,
+        fontSize: 16,
+    },
+    linkText: {
+        fontSize: 16,
+        width: '100%',
+        padding: 10,
+        marginBottom: 5,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 5,
     },
 });

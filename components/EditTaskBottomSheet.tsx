@@ -53,8 +53,8 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
         }
     };
 
-    const handelRemoveLink = (id:number | null, name:string) => {
-        if(id){
+    const handelRemoveLink = (id: number | null, name: string) => {
+        if (id) {
             setEditedTask((obj) => ({
                 ...obj,
                 references: obj.references.filter((link) => link.id != id)
@@ -82,8 +82,8 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                             <Text style={[styles.tag, { backgroundColor: editedTask.group.bgColor }]}>{editedTask.group.title}</Text>
                         )}
                         {editedTask.habit ? (
-                            <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>Habit {editedTask.habit.id}</Text>
-                        ):(
+                            <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>Habit</Text>
+                        ) : (
                             <Text style={[styles.tag, { backgroundColor: '#F3D6FB' }]}>Task</Text>
                         )}
                     </View>
@@ -120,7 +120,8 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                     <View style={styles.rowContainer}>
                         <Text style={styles.tag}>Due date:</Text>
                         {isEditing ? (
-                            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                            <TouchableOpacity onPress={() => setShowDatePicker(true)}
+                                style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text style={[styles.tag, styles.standardTag]}>
                                     {editedTask.dueAt ? format(editedTask.dueAt, 'dd MMM') : 'Select date'}
                                 </Text>

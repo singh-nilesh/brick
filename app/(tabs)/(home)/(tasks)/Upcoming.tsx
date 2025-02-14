@@ -9,7 +9,6 @@ import { Task } from '@/utils/customTypes';
 import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
 import { getTasksForDate, updateTask } from '@/utils/taskService';
 import { markDeleted } from '@/utils/todoService';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const Upcoming = () => {
