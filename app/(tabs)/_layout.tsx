@@ -1,25 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import Foundation from "@expo/vector-icons/Foundation";
 import { Tabs, usePathname } from "expo-router";
 import AddMenu from "./AddMenu"; // Import the Floating Action Menu
 
 export default function TabLayout() {
-
-  // Get the current page path
   const pagePath = usePathname();
-  const bottomTabBarVisible = ["/FetchAiResponse", "/Profile", "/GroupOverview", "/ExplorePage"].includes(pagePath) ? "none" : 'flex';
+  const [isTabBarHidden, setIsTabBarHidden] = useState(false);
 
+  useEffect(() => {
+    setIsTabBarHidden(["/FetchAiResponse", "/Profile", "/GroupOverview", "/ExplorePage"].includes(pagePath));
+  }, [pagePath]);
 
   return (
     <View style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: {
-            ...styles.tabBarStyle,
-            display: bottomTabBarVisible,
-          },
+          tabBarStyle: isTabBarHidden ? styles.hiddenTabBar : styles.tabBarStyle,
           tabBarShowLabel: false,
         }}
       >
@@ -60,9 +58,8 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* Floating Action Menu */
-      bottomTabBarVisible === 'flex' && <AddMenu/>}
-      
+      {/* Floating Action Menu */}
+      {!isTabBarHidden && <AddMenu />}
     </View>
   );
 }
@@ -83,5 +80,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 1,
+  },
+  hiddenTabBar: {
+    height: 0,
+    position: "absolute",
   },
 });

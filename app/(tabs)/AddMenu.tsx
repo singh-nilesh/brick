@@ -1,11 +1,13 @@
 import React, { useState, useRef } from "react";
 import { View, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import Feather from '@expo/vector-icons/Feather';
+import SpeechToText from "@/components/SpeechToText";
 
 export default function AddMenu() {
   const [menuVisible, setMenuVisible] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const [speechToTextVisible, setSpeechToTextVisible] = useState(false);
 
   const toggleMenu = () => {
     if (menuVisible) {
@@ -25,7 +27,7 @@ export default function AddMenu() {
   const menuItems: { icon: "plus" | "camera" | "mic"; angle: number; onPress: () => void }[] = [
     { icon: "camera", angle: 225, onPress: () => console.log("Camera Clicked!") },
     { icon: "plus", angle: 270, onPress: () => console.log("Plus Clicked!") },
-    { icon: "mic", angle: 315, onPress: () => console.log("Mic Clicked!") },
+    { icon: "mic", angle: 315, onPress: () => {setSpeechToTextVisible(true); setMenuVisible(false);} },
   ];
 
   return (
@@ -60,6 +62,9 @@ export default function AddMenu() {
       <TouchableOpacity style={styles.fab} onPress={toggleMenu}>
         <Feather name="plus" size={30} color="white" />
       </TouchableOpacity>
+
+      {/*Speech to text visible */
+      speechToTextVisible && <SpeechToText visible={speechToTextVisible} closeModal={() => setSpeechToTextVisible(false)} />}
     </View>
   );
 }
