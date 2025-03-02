@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import React from 'react';
-import { Habit } from '@/utils/customTypes';
+import { Habit } from '../utils/customTypes';
 
 
 interface WeekDaysPickerProps {

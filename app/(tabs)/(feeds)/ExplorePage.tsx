@@ -4,7 +4,7 @@ import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { Firestore_db } from '@/firebaseConfig';
+import { Firestore_db } from '../../../firebaseConfig';
 
 interface PostProps {
   id: string;

@@ -1,19 +1,18 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Suspense, useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { useColorScheme } from '../components/useColorScheme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClerkLoaded, ClerkProvider } from '@clerk/clerk-expo';
-import { tokenCache } from '@/cache';
+import { tokenCache } from '../cache';
 import { SQLiteProvider } from 'expo-sqlite';
 import { ActivityIndicator, View, Text } from 'react-native';
-import { migrateDbIfNeeded } from '@/utils/Database';
+import { migrateDbIfNeeded } from '../utils/Database';
 
 
 export {

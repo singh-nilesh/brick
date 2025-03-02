@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Group, Habit } from '@/utils/customTypes';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Group, Habit } from '../utils/customTypes';
+import CalendarDatePicker from './CalenderDatePicker';
 import { format } from 'date-fns';
 
 interface AddHabitBottomSheetProps {
@@ -23,7 +23,7 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
         dtEnd: new Date(),
         id: 0,
         createdAt: new Date(),
-        referenceLink : null
+        referenceLink: null
     }
     const [newHabit, setNewHabit] = useState<Habit>(HabitInit);
 
@@ -147,11 +147,9 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
                     </Text>
                 </TouchableOpacity>
                 {showStartDatePicker && (
-                    <DateTimePicker
-                        value={newHabit.dtStart}
-                        mode="date"
-                        display="default"
-                        onChange={(event, date) => handleDateChange('dtStart', date)}
+                    <CalendarDatePicker
+                        selectedDate={newHabit.dtStart}
+                        setSelectedDate={(date) => handleDateChange('dtStart', date)}
                     />
                 )}
 
@@ -162,11 +160,9 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
                     </Text>
                 </TouchableOpacity>
                 {showEndDatePicker && (
-                    <DateTimePicker
-                        value={newHabit.dtEnd}
-                        mode="date"
-                        display="default"
-                        onChange={(event, date) => handleDateChange('dtEnd', date)}
+                    <CalendarDatePicker
+                        selectedDate={newHabit.dtEnd}
+                        setSelectedDate={(date) => handleDateChange('dtEnd', date)}
                     />
                 )}
 

@@ -1,11 +1,10 @@
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native'
 import React, { useCallback, useState } from 'react'
-import { useUser } from '@clerk/clerk-expo';
-import { Todo } from '@/utils/customTypes';
-import TodoListItems from '@/components/TodoListItems';
+import { Todo } from '../../../../utils/customTypes';
+import TodoListItems from '../../../../components/TodoListItems';
 import { useSQLiteContext } from 'expo-sqlite';
-import { addTodo, getTodos, markDeleted, updateTodo } from '@/utils/todoService';
-import FooterTaskInput from '@/components/FooterTaskInput';
+import { addTodo, getTodos, markDeleted, updateTodo } from '../../../../utils/todoService';
+import FooterTaskInput from '../../../../components/FooterTaskInput';
 import { useFocusEffect } from 'expo-router';
 
 const TodoScreen = () => {

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { Task } from '@/utils/customTypes';
+import { Task } from '../utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import CalendarDatePicker from './CalenderDatePicker';
 import { format } from 'date-fns';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -218,11 +218,9 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
 
                     {/* Date Picker */}
                     {showDatePicker && (
-                        <DateTimePicker
-                            value={editedTask.dueAt || new Date()}
-                            mode="date"
-                            display="default"
-                            onChange={handleDateChange}
+                        <CalendarDatePicker
+                            selectedDate={editedTask.dueAt || new Date()}
+                            setSelectedDate={(date) => setEditedTask((obj) => ({ ...obj, dueAt: date }))}
                         />
                     )}
 

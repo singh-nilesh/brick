@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { format } from 'date-fns';
 import FeatherIcon from '@expo/vector-icons/Feather';
-import DateTimePicker from '@react-native-community/datetimepicker';
-
+import CalendarDatePicker from './CalenderDatePicker';
 
 interface HeaderDatePickerProps {
     selectedDate: Date;
@@ -31,12 +30,7 @@ const HeaderDatePicker = ({ selectedDate, setSelectedDate }:HeaderDatePickerProp
             </TouchableOpacity>
 
             {showPicker && (
-                <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display="calendar"
-                    onChange={handleDateChange}
-                />
+                <CalendarDatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
             )}
         </View>
     );
