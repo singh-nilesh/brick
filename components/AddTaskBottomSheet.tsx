@@ -241,10 +241,11 @@ const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible
                     {/* Task Details */}
                     {renderItem()}
 
-                    {/* Date Picker */}
-                    {showDatePicker && (
-                        <CalendarDatePicker selectedDate={newTask.dueAt || new Date()} setSelectedDate={handleDateChange} />
-                    )}
+                    {/* Date Picker */
+                        <CalendarDatePicker visible={showDatePicker}
+                            onClose={() => setShowDatePicker(false)}
+                            selectedDate={newTask.dueAt || new Date()} setSelectedDate={handleDateChange} />
+                    }
 
                     {/* Add Link Modal */}
                     {showAddLinkModal && (

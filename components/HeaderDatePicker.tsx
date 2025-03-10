@@ -30,7 +30,7 @@ const HeaderDatePicker = ({ selectedDate, setSelectedDate }:HeaderDatePickerProp
             </TouchableOpacity>
 
             {showPicker && (
-                <CalendarDatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+                <CalendarDatePicker visible={showPicker} onClose={() => setShowPicker(false)} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
             )}
         </View>
     );

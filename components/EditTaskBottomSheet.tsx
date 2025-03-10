@@ -216,13 +216,13 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                     {/* Task Details */}
                     {renderItem()}
 
-                    {/* Date Picker */}
-                    {showDatePicker && (
+                    {/* Date Picker */
                         <CalendarDatePicker
                             selectedDate={editedTask.dueAt || new Date()}
+                            visible={showDatePicker}
+                            onClose={() => setShowDatePicker(false)}
                             setSelectedDate={(date) => setEditedTask((obj) => ({ ...obj, dueAt: date }))}
-                        />
-                    )}
+                        />}
 
                     {/* Add Link Modal */}
                     {showAddLinkModal && (

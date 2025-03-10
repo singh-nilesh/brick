@@ -1,68 +1,47 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { format } from 'date-fns';
-import FeatherIcon from '@expo/vector-icons/Feather';
 
 interface CalendarDatePickerProps {
     selectedDate: Date;
     setSelectedDate: (date: Date) => void;
+    visible: boolean;
+    onClose: () => void;
 }
 
-const CalendarDatePicker = ({ selectedDate, setSelectedDate }: CalendarDatePickerProps) => {
-    const [showPicker, setShowPicker] = useState(false);
-
-    const togglePicker = () => setShowPicker(prev => !prev);
-
+const CalendarDatePicker = ({ selectedDate, setSelectedDate, visible, onClose }: CalendarDatePickerProps) => {
     const handleDayPress = (day: { dateString: string }) => {
         setSelectedDate(new Date(day.dateString));
-        setShowPicker(false);
+        onClose();
     };
 
     return (
-        <View>
-            <TouchableOpacity style={styles.dateView} onPress={togglePicker}>
-                <FeatherIcon name="calendar" size={24} color="#000" />
-                <Text style={styles.dateText}>{format(selectedDate, 'MMMM dd, yyyy')}</Text>
-            </TouchableOpacity>
-
-            <Modal visible={showPicker} transparent animationType="slide">
-                <View style={styles.modalContainer}>
-                    <View style={styles.calendarContainer}>
-                        <Calendar
-                            onDayPress={handleDayPress}
-                            markedDates={{
-                                [format(selectedDate, 'yyyy-MM-dd')]: {
-                                    selected: true,
-                                    selectedColor: 'blue',
-                                },
-                            }}
-                        />
-                        <TouchableOpacity style={styles.closeButton} onPress={togglePicker}>
-                            <Text style={styles.closeText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
+        <Modal visible={visible} transparent animationType="fade">
+            <View style={styles.modalContainer}>
+                <View style={styles.calendarContainer}>
+                    <Calendar
+                        onDayPress={handleDayPress}
+                        markedDates={{
+                            [format(selectedDate, 'yyyy-MM-dd')]: {
+                                selected: true,
+                                selectedColor: '#000',
+                            },
+                        }}
+                        enableSwipeMonths = {true}
+                    />
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Text style={styles.closeText}>Close</Text>
+                    </TouchableOpacity>
                 </View>
-            </Modal>
-        </View>
+            </View>
+        </Modal>
     );
 };
 
 export default CalendarDatePicker;
 
 const styles = StyleSheet.create({
-    dateView: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        backgroundColor: '#fff',
-    },
-    dateText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 8,
-        color: '#000',
-    },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
