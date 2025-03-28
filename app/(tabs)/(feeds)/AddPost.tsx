@@ -1,13 +1,12 @@
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { fs_storage, Firestore_db } from '@/firebaseConfig';
-import * as ImagePicker from 'expo-image-picker';
+import { Firestore_db } from '../../../firebaseConfig';
 import { useUser } from '@clerk/clerk-expo';
-import { router, useFocusEffect } from 'expo-router';
-import { Group, Task, Habit } from '@/utils/customTypes';
-import { getFullGroup, getGroups } from '@/utils/taskService';
+import { router } from 'expo-router';
+import { Group, Task, Habit } from '../../../utils/customTypes';
+import { getFullGroup, getGroups } from '../../../utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
 
 const AddPost = () => {

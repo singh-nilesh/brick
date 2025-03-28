@@ -12,8 +12,8 @@ export const insertReferences = async (db: SQLiteDatabase, taskId: number | null
         try {
             for (const ref of validReferences) {
                 taskId
-                ? await insertRef.executeAsync([taskId, ref.name, ref.url])
-                : await insertRef.executeAsync([null, ref.name, ref.url]);
+                    ? await insertRef.executeAsync([taskId, ref.name, ref.url])
+                    : await insertRef.executeAsync([null, ref.name, ref.url]);
             }
         } finally {
             await insertRef.finalizeAsync();
@@ -78,23 +78,17 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: any[], dueDate: 
 
             let isDue: Boolean = false;
 
-            // if the Start date is due today
-            if (habit.dtStart.getTime() === new Date(dueDate.setHours(0, 0, 0, 0)).getTime()) {
+            const startOfStartWeek = new Date(habit.dtStart);
+            startOfStartWeek.setDate(habit.dtStart.getDate() - habit.dtStart.getDay());
+
+            const startOfDueWeek = new Date(dueDate);
+            startOfDueWeek.setDate(dueDate.getDate() - dueDate.getDay());
+
+            const weeksSinceStart = Math.ceil((startOfDueWeek.getTime() - startOfStartWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
+
+            // Check if the current week aligns with the interval
+            if (weeksSinceStart % habit.interval === 0) {
                 isDue = true;
-            }
-            else {
-                const startOfStartWeek = new Date(habit.dtStart);
-                startOfStartWeek.setDate(habit.dtStart.getDate() - habit.dtStart.getDay());
-
-                const startOfDueWeek = new Date(dueDate);
-                startOfDueWeek.setDate(dueDate.getDate() - dueDate.getDay());
-
-                const weeksSinceStart = Math.ceil((startOfDueWeek.getTime() - startOfStartWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
-
-                // Check if the current week aligns with the interval
-                if (weeksSinceStart % habit.interval === 0) {
-                    isDue = true;
-                }
             }
 
             if (isDue) {
@@ -197,7 +191,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
             const habits = await habitQuery.executeAsync();
             habitRows = await habits.getAllAsync();
 
-            // Filter habits that are Due today or already in DB
+            // Filter habits that are Due today and already in DB
             const HabitList = (habitRows as any[])
                 .map(habit => ({
                     ...mapDBToHabit(habit), // Map habit-specific fields

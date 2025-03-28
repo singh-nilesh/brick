@@ -1,13 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, ToastAndroid } from 'react-native';
-import WeekDaysPicker from '@/components/WeekDaysPicker';
-import { Habit, Group, Task } from '@/utils/customTypes';
+import WeekDaysPicker from '../../../components/WeekDaysPicker';
+import { Habit, Group, Task } from '../../../utils/customTypes';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useSQLiteContext } from 'expo-sqlite';
-import { addGroup } from '@/utils/taskService';
-import { format } from 'date-fns';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { addGroup } from '../../../utils/taskService';
+import CalendarDatePicker from '../../../components/CalenderDatePicker';
 
 
 interface HabitProps {
@@ -217,12 +216,7 @@ const GroupOverview = () => {
 
             {/* Date Picker */}
             {showDatePicker && selectedTaskIndex !== null && (
-                <DateTimePicker
-                    value={tasks[selectedTaskIndex]?.dueAt || new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                />
+                <CalendarDatePicker visible={showDatePicker} onClose={() => setShowDatePicker(false)} selectedDate={tasks[selectedTaskIndex].dueAt || new Date()} setSelectedDate={handleDateChange} />
             )}
 
         </View>

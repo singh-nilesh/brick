@@ -1,10 +1,10 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { format, isPast, isToday, set } from 'date-fns';
-import { Group, Task } from '@/utils/customTypes';
-import { getGroups, getFullGroup, updateTask } from '@/utils/taskService';
+import { Group, Task } from '../../../utils/customTypes';
+import { getGroups, getFullGroup, updateTask } from '../../../utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
-import TaskBottomSheet from '@/components/EditTaskBottomSheet';
+import TaskBottomSheet from '../../../components/EditTaskBottomSheet';
 import { useFocusEffect } from 'expo-router';
 
 const getCircleColor = (dueDate: Date, done: boolean) => {

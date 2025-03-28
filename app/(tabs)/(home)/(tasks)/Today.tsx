@@ -1,12 +1,12 @@
 import { View, Text, SectionList, StyleSheet } from 'react-native';
 import React, { useCallback, useState } from 'react';
-import { Task } from '@/utils/customTypes';
-import TaskListItems from '@/components/TaskListItems';
-import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
+import { Task } from '../../../../utils/customTypes';
+import TaskListItems from '../../../../components/TaskListItems';
+import EditTaskBottomSheet from '../../../../components/EditTaskBottomSheet';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
-import { getTasksForDate, updateTask } from '@/utils/taskService';
-import { markDeleted } from '@/utils/todoService';
+import { getTasksForDate, updateTask } from '../../../../utils/taskService';
+import { markDeleted } from '../../../../utils/todoService';
 import { RefreshControl } from 'react-native';
 
 const Today = () => {

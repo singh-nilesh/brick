@@ -4,9 +4,9 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { useFocusEffect, useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useSQLiteContext } from "expo-sqlite";
-import { deleteGroup, getGroupOverview } from "@/utils/taskService";
-import JsonInput from "@/components/JsonInput";
-import JsonGuide from "@/components/JsonGuide";
+import { deleteGroup, getGroupOverview } from "../../../utils/taskService";
+import JsonInput from "../../../components/JsonInput";
+import JsonGuide from "../../../components/JsonGuide";
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 

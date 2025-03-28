@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { Task, Group } from '@/utils/customTypes';
+import { Task, Group } from '../utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import CalendarDatePicker from './CalenderDatePicker';
 import { format } from 'date-fns';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -48,11 +48,9 @@ const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible
         }
     };
 
-    const handleDateChange = (event: any, selectedDate: Date | undefined) => {
+    const handleDateChange = (selectedDate: Date) => {
         setShowDatePicker(false);
-        if (selectedDate) {
-            setNewTask((obj) => ({ ...obj, dueAt: selectedDate }));
-        }
+        setNewTask((obj) => ({ ...obj, dueAt: selectedDate }));
     };
 
     const handleAddLink = () => {
@@ -243,15 +241,11 @@ const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible
                     {/* Task Details */}
                     {renderItem()}
 
-                    {/* Date Picker */}
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={newTask.dueAt || new Date()}
-                            mode="date"
-                            display="default"
-                            onChange={handleDateChange}
-                        />
-                    )}
+                    {/* Date Picker */
+                        <CalendarDatePicker visible={showDatePicker}
+                            onClose={() => setShowDatePicker(false)}
+                            selectedDate={newTask.dueAt || new Date()} setSelectedDate={handleDateChange} />
+                    }
 
                     {/* Add Link Modal */}
                     {showAddLinkModal && (

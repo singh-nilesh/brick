@@ -1,14 +1,14 @@
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
-import HorizontalDatePicker from '@/components/HorizontalDatePicker'
-import HeaderDatePicker from '@/components/HeaderDatePicker';
+import HorizontalDatePicker from '../../../../components/HorizontalDatePicker'
+import HeaderDatePicker from '../../../../components/HeaderDatePicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
-import TaskListItems from '@/components/TaskListItems';
-import { Task } from '@/utils/customTypes';
-import EditTaskBottomSheet from '@/components/EditTaskBottomSheet';
-import { getTasksForDate, updateTask } from '@/utils/taskService';
-import { markDeleted } from '@/utils/todoService';
+import TaskListItems from '../../../../components/TaskListItems';
+import { Task } from '../../../../utils/customTypes';
+import EditTaskBottomSheet from '../../../../components/EditTaskBottomSheet';
+import { getTasksForDate, updateTask } from '../../../../utils/taskService';
+import { markDeleted } from '../../../../utils/todoService';
 
 
 const Upcoming = () => {
