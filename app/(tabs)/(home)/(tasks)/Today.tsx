@@ -74,7 +74,7 @@ const Today = () => {
   return (
     <View style={styles.container}>
       <SectionList
-      scrollEnabled={true}
+        scrollEnabled={true}
         sections={sections}
         keyExtractor={(item) => (item.id.toString() + item.habit?.id.toString())}
         renderSectionHeader={({ section: { title } }) => (
@@ -107,6 +107,7 @@ const Today = () => {
         }
       />
       <EditTaskBottomSheet
+        db={db}
         task={selectedTask}
         visible={showTaskBottomSheet}
         onClose={closeModal}

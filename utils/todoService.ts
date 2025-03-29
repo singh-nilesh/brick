@@ -62,45 +62,70 @@ export const markDeleted = async (db: SQLiteDatabase, id: number): Promise<void>
 
 
 // Complete Todo or Task
-export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE tasks SET status = 1, completed_at = $completedAt WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({
-            $completedAt: formatDateForDB(new Date()),
-            $id: id,
-        });
-    } finally {
-        await statement.finalizeAsync();
+export const markAsDone = async (db: SQLiteDatabase, id: number, isSubtask = false): Promise<void> => {
+    if (isSubtask) {
+        const statement = await db.prepareAsync(`UPDATE todos SET status = 1 WHERE id = $id`);
+        try {
+            await statement.executeAsync({ $id: id });
+        } finally {
+            await statement.finalizeAsync();
+        }
+    }
+    else {
+        const statement = await db.prepareAsync(
+            `UPDATE tasks SET status = 1, completed_at = $completedAt WHERE id = $id`
+        );
+        try {
+            await statement.executeAsync({
+                $completedAt: formatDateForDB(new Date()),
+                $id: id,
+            });
+        } finally {
+            await statement.finalizeAsync();
+        }
     }
 };
 
 
 // Uncompleted Todo or Task
-export const markAsNotDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
-    const statement = await db.prepareAsync(
-        `UPDATE tasks SET status = 0, completed_at = NULL WHERE id = $id`
-    );
-    try {
-        await statement.executeAsync({ $id: id });
-    } finally {
-        await statement.finalizeAsync();
+export const markAsNotDone = async (db: SQLiteDatabase, id: number, isSubtask = false): Promise<void> => {
+    if (isSubtask) {
+        const statement = await db.prepareAsync(`UPDATE todos SET status = 0 WHERE id = $id`);
+        try {
+            await statement.executeAsync({ $id: id });
+        } finally {
+            await statement.finalizeAsync();
+        }
+    }
+    else {
+        const statement = await db.prepareAsync(
+            `UPDATE tasks SET status = 0, completed_at = NULL WHERE id = $id`
+        );
+        try {
+            await statement.executeAsync({ $id: id });
+        } finally {
+            await statement.finalizeAsync();
+        }
     }
 };
 
 
 // Add subtask
 export const addSubtask = async (db: SQLiteDatabase, task_id: number, new_title: string): Promise<void> => {
+    console.log(new_title);
     const statement = await db.prepareAsync(
-        `INSERT INTO todos (task_id, title, due_at) VALUES (?, ?)`
+        `INSERT INTO todos (task_id, title) VALUES ($task_id, $title)`
     );
     try {
         await statement.executeAsync({
             $title: new_title,
             $task_id: task_id
         });
-    } finally {
+    }
+    catch (error) {
+        console.log(error);
+    }
+    finally {
         await statement.finalizeAsync();
     }
 };
@@ -111,7 +136,7 @@ export const getSubtasks = async (db: SQLiteDatabase, task_id: number) => {
     try {
         const result = await statement.executeAsync({ $task_id: task_id });
         const rows = await result.getAllAsync();
-        
+
         return rows.map(mapDBToTodo);
     } finally {
         await statement.finalizeAsync();
@@ -132,7 +157,7 @@ export const deleteSubtask = async (db: SQLiteDatabase, id: number): Promise<voi
 
 // Update subtask
 export const updateSubtask = async (db: SQLiteDatabase, subtask: Todo): Promise<void> => {
-    
+
     const statement = await db.prepareAsync(
         `UPDATE todos 
         SET title = $title, status = #status, due_at = $due_at

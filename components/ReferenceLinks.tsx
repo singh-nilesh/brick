@@ -30,7 +30,7 @@ const ReferenceLinks = ({ links, isEditing, onRemove }: ReferenceLinksProps) => 
     return (
         <View style={styles.container}>
         {links.map((link, index) => (
-            <View style={{ flexDirection: 'row' }} key={link.id || index}>
+            <View style={{ flexDirection: 'row' }} key={index}>
                 <TouchableOpacity
                     style={styles.linkContainer}
                     onPress={() => Linking.openURL(link.url)}

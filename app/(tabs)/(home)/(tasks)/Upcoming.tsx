@@ -96,6 +96,7 @@ const Upcoming = () => {
             />
 
             <EditTaskBottomSheet
+                db={db}
                 task={selectedTask}
                 visible={showTaskBottomSheet}
                 onClose={closeModal}

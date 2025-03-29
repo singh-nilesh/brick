@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, ToastAndroid } from 'react-native';
 import WeekDaysPicker from '../../../components/WeekDaysPicker';
@@ -26,6 +26,7 @@ const GroupOverview = () => {
     const db = useSQLiteContext();
     const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const router = useRouter();
 
 
     // Get JSON data from previous screen
@@ -73,6 +74,7 @@ const GroupOverview = () => {
         habit: null,
         references: task.reference ? task.reference : [],
         priority: 5, // Default priority value
+        subtasks: null
     }));
 
 

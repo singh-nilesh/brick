@@ -58,14 +58,14 @@ const Progress = () => {
   }, [activeGroup, refreshDB]);
 
   // Update Task
-      const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
-          if (!oldTask || !newTask) return;
-          setShowTaskBottomSheet(false);
-          setSelectedTask(null);
-          await updateTask(db, oldTask, newTask);
-          setRefreshDB(!refreshDB);
-      }
-  
+  const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
+    if (!oldTask || !newTask) return;
+    setShowTaskBottomSheet(false);
+    setSelectedTask(null);
+    await updateTask(db, oldTask, newTask);
+    setRefreshDB(!refreshDB);
+  }
+
 
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
@@ -102,13 +102,15 @@ const Progress = () => {
                   setSelectedTask(item);
                   setShowTaskBottomSheet(true);
                 }}
-               style={[styles.stepContainer, 
-                {borderColor: item.dueAt && format(new Date(item.dueAt), 'yyyy-MM-dd') === format(new Date(Date.now()), 'yyyy-MM-dd') ? 'lightgrey' : 'transparent'}
-               ]}>
+                style={[styles.stepContainer,
+                { borderColor: item.dueAt && format(new Date(item.dueAt), 'yyyy-MM-dd') === format(new Date(Date.now()), 'yyyy-MM-dd') ? 'lightgrey' : 'transparent' }
+                ]}>
 
                 {/* Circle with dynamic status color */}
-                <View style={[styles.dayContainer, { backgroundColor: circleColor,
-                   borderBlockColor: item.dueAt && format(new Date(item.dueAt), 'yyyy-MM-dd') === format(new Date(Date.now()), 'yyyy-MM-dd') ? 'black' : 'transparent' }]}>
+                <View style={[styles.dayContainer, {
+                  backgroundColor: circleColor,
+                  borderBlockColor: item.dueAt && format(new Date(item.dueAt), 'yyyy-MM-dd') === format(new Date(Date.now()), 'yyyy-MM-dd') ? 'black' : 'transparent'
+                }]}>
                   <Text style={styles.dayText}>{index + 1}</Text>
                 </View>
 
@@ -137,6 +139,7 @@ const Progress = () => {
       </View>
 
       <TaskBottomSheet
+        db={db}
         task={selectedTask}
         visible={showTaskBottomSheet}
         onClose={() => {

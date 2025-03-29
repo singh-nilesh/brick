@@ -31,7 +31,8 @@ const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible
         habit: null,
         references: [],
         comment: '',
-        isDeleted: false
+        isDeleted: false,
+        subtasks: null
     };
     const [newTask, setNewTask] = useState<Task>(emptyTask);
 

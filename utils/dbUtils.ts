@@ -41,6 +41,7 @@ export const mapDBToTask = (dbRow: any): Task => {
         isDeleted: dbRow.is_deleted === 1,
         deletedAt: dbRow.deleted_at ? parseDateFromDB(dbRow.deleted_at) : null,
         dueAtTime: dbRow.due_at_time ? dbRow.due_at_time : null,
+        subtasks: dbRow.subtasks ? dbRow.subtasks : [],
         group: dbRow.group
             ? {
                   id: dbRow.group_id,

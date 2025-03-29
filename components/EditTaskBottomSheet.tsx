@@ -8,20 +8,19 @@ import CalendarDatePicker from './CalenderDatePicker';
 import { format } from 'date-fns';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
-
-
-//import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import * as Progress from 'react-native-progress';
+import SubTaskList from './SubTaskList';
+import { SQLiteDatabase } from 'expo-sqlite';
 
 
 interface EditTaskBottomSheetProps {
+    db: SQLiteDatabase;
     task: Task | null;
     visible: boolean;
     onClose: () => void;
     onSave: (updatedTask: Task) => void;
 }
 
-const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible, onClose, onSave }) => {
+const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible, onClose, onSave, db }) => {
     if (!task) return null;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -138,19 +137,17 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                         )}
                     </View>
 
-                    {/* Description */}
-                    <Text style={styles.subHeader}>Description:</Text>
-                    {isEditing ? (
-                        <TextInput
-                            style={styles.input}
-                            value={editedTask.description || ''}
-                            onChangeText={(text) => setEditedTask((obj) => ({ ...obj, description: text }))}
-                            placeholder="Add a description"
-                            multiline
+
+                    {/* Subtask */}
+                    <Text style={styles.subHeader}>Subtask:</Text>
+                    <View style={styles.subTaskContainer}>
+                        <SubTaskList
+                            task_id={editedTask.id}
+                            subtasks={editedTask.subtasks || []}
+                            db={db}
+                            setSubtasks={(updatedSubtasks) => setEditedTask((obj) => ({ ...obj, subtasks: updatedSubtasks }))}
                         />
-                    ) : (
-                        <Text style={styles.description}>{task.description || 'Add a description'}</Text>
-                    )}
+                    </View>
 
                     {/* Comment */}
                     <Text style={styles.subHeader}>Comment:</Text>
@@ -163,7 +160,7 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                             multiline
                         />
                     ) : (
-                        <Text style={styles.description}>{task.comment || 'Add a comment'}</Text>
+                        <Text style={{ color: 'darkgrey', fontSize: 13 }}>{task.comment || 'Add a comment'}</Text>
                     )}
 
                     {/* Reference Links */}
@@ -328,9 +325,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 10,
     },
-    description: {
-        fontSize: 14,
-        color: '#666',
+    subTaskContainer: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
+        height: 150,
         marginBottom: 10,
     },
     saveButton: {

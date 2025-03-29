@@ -66,7 +66,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE TABLE IF NOT EXISTS todos (
             id INTEGER PRIMARY KEY, 
             task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE, 
-            title TEXT NOT NULL, due_time TEXT
+            title TEXT NOT NULL,
             status INTEGER NOT NULL DEFAULT 0,
             due_at TEXT
         );

@@ -7,17 +7,18 @@ import { Todo } from '../utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { markAsDone, markAsNotDone } from '../utils/todoService';
 
-interface TaskListItemsProps {
+interface TodoListItemsProps {
     db: SQLiteDatabase;
     item: Todo;
     setTasks: React.Dispatch<React.SetStateAction<Todo[]>>;
     onDelete: () => void;
     onEdit: (newTask: string) => void;
+    isSubtask?: boolean;
 }
 
-const TodoListItems = ({ db, item, setTasks, onDelete, onEdit }: TaskListItemsProps) => {
+const TodoListItems = ({isSubtask, db, item, setTasks, onDelete, onEdit }: TodoListItemsProps) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [editedTask, setEditedTask] = useState<string>(item.title);
+    const [editedTitle, setEditedTitle] = useState<string>(item.title);
 
     const handleIsDone = (id: number) => {
             setTasks((currentTasks) => {
@@ -30,9 +31,9 @@ const TodoListItems = ({ db, item, setTasks, onDelete, onEdit }: TaskListItemsPr
                 if (taskToUpdate) {
                     (async () => {
                         if (taskToUpdate.status) {
-                            await markAsDone(db, id);
+                            await markAsDone(db, id, isSubtask);
                         } else {
-                            await markAsNotDone(db, id);
+                            await markAsNotDone(db, id, isSubtask);
                         }
                     })();
                 }
@@ -67,15 +68,15 @@ const TodoListItems = ({ db, item, setTasks, onDelete, onEdit }: TaskListItemsPr
 
                 {isEditing ? (
                     <TextInput
-                        value={editedTask}
-                        onChangeText={setEditedTask}
+                        value={editedTitle}
+                        onChangeText={setEditedTitle}
                         style={[styles.taskTitle, styles.input]}
                         autoFocus
                         onBlur={() => {
-                            if (editedTask.trim().length > 0) {
-                                onEdit(editedTask.trim());
+                            if (editedTitle.trim().length > 0) {
+                                onEdit(editedTitle.trim());
                             } else {
-                                setEditedTask(item.title);
+                                setEditedTitle(item.title);
                             }
                             setIsEditing(false);
                         }}
@@ -103,7 +104,7 @@ export default TodoListItems;
 const styles = StyleSheet.create({
     taskTitle: {
         fontFamily: 'InterSemi',
-        fontSize: 20,
+        fontSize: 18,
         color: 'black',
         flex: 1,
         paddingRight: 40,

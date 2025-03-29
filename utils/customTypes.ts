@@ -21,6 +21,7 @@ export interface Task {
     completedAt?: Date | null;
     isDeleted: boolean;
     deletedAt?: Date | null;
+    subtasks: Todo[] | null;
     group: {
         id: number;
         title: string;

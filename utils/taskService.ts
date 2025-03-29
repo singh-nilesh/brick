@@ -1,8 +1,10 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToHabit, mapDBToTask } from "./dbUtils";
 import { formatDateForDB } from "./dbUtils";
-import { Group, Habit, Task } from "./customTypes";
+import { Group, Habit, Task, Todo } from "./customTypes";
 import { ToastAndroid } from "react-native";
+import { addSubtask } from "./todoService";
+import { sub } from "date-fns";
 
 // Function to insert references
 export const insertReferences = async (db: SQLiteDatabase, taskId: number | null, references: any[]) => {
@@ -35,6 +37,13 @@ export const deleteReferences = async (db: SQLiteDatabase, references: any[]) =>
     }
 }
 
+// Function to insert SubTask list
+export const addSubTaskList = async (db: SQLiteDatabase,task_id: number, SubTask: Todo[]) => {
+    for (const subTask of SubTask) {
+        await addSubtask(db, task_id, subTask.title);
+    }
+}
+
 // Add Tasks
 export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
     const insertQuery = await db.prepareAsync(
@@ -59,8 +68,9 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
         await insertQuery.finalizeAsync();
     }
 
-    // Add references
+    // Add references and sub task
     await insertReferences(db, TaskId, newTask.references);
+    newTask.subtasks ? await addSubTaskList(db, TaskId, newTask.subtasks) : null;
 }
 
 // Generate Task Dynamically
@@ -220,6 +230,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
                 let group = null;
                 let habit = null;
                 let references = null;
+                let subtasks = null;
 
                 // Fetch group details if group_id is not null
                 if (row.group_id) {
@@ -260,8 +271,25 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
                     await refQuery.finalizeAsync();
                 }
 
+                // Fetch subtasks
+                const subTaskQuery = await db.prepareAsync(
+                    `SELECT * FROM todos WHERE task_id = $taskId`
+                );
+                try {
+                    const subTaskRows = await subTaskQuery.executeAsync({ $taskId: row.id });
+                    subtasks = (await subTaskRows.getAllAsync()).map((subtask: any) => ({
+                        id: subtask.id,
+                        title: subtask.title,
+                        status: subtask.status,
+                        dueAt: subtask.due_at,
+                    }));
+                } finally {
+                    await subTaskQuery.finalizeAsync();
+                }
+
                 const data = {
                     ...row,
+                    subtasks, 
                     group: group ? group : null,
                     habit: habit ? habit : null,
                     references,
