@@ -1,6 +1,7 @@
 import { SQLiteDatabase } from "expo-sqlite";
 import { mapDBToTodo } from "./dbUtils";
 import { formatDateForDB } from "./dbUtils";
+import { Todo } from "./customTypes";
 
 // Add a Todo
 export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<void> => {
@@ -88,3 +89,63 @@ export const markAsNotDone = async (db: SQLiteDatabase, id: number): Promise<voi
     }
 };
 
+
+// Add subtask
+export const addSubtask = async (db: SQLiteDatabase, task_id: number, new_title: string): Promise<void> => {
+    const statement = await db.prepareAsync(
+        `INSERT INTO todos (task_id, title, due_at) VALUES (?, ?)`
+    );
+    try {
+        await statement.executeAsync({
+            $title: new_title,
+            $task_id: task_id
+        });
+    } finally {
+        await statement.finalizeAsync();
+    }
+};
+
+// Get subtasks
+export const getSubtasks = async (db: SQLiteDatabase, task_id: number) => {
+    const statement = await db.prepareAsync(`SELECT * FROM todos WHERE task_id = $task_id`);
+    try {
+        const result = await statement.executeAsync({ $task_id: task_id });
+        const rows = await result.getAllAsync();
+        
+        return rows.map(mapDBToTodo);
+    } finally {
+        await statement.finalizeAsync();
+    }
+};
+
+// Delete subtask
+export const deleteSubtask = async (db: SQLiteDatabase, id: number): Promise<void> => {
+    const statement = await db.prepareAsync(
+        `DELETE FROM todos WHERE id = $id`
+    );
+    try {
+        await statement.executeAsync({ $id: id });
+    } finally {
+        await statement.finalizeAsync();
+    }
+};
+
+// Update subtask
+export const updateSubtask = async (db: SQLiteDatabase, subtask: Todo): Promise<void> => {
+    
+    const statement = await db.prepareAsync(
+        `UPDATE todos 
+        SET title = $title, status = #status, due_at = $due_at
+        WHERE id = $id`
+    );
+    try {
+        await statement.executeAsync({
+            $title: subtask.title ?? "",
+            $status: subtask.status ?? 0,
+            $due_at: subtask.dueAt ?? null,
+            $id: subtask.id
+        });
+    } finally {
+        await statement.finalizeAsync();
+    }
+};

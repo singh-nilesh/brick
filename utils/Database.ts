@@ -62,6 +62,15 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             is_task INTEGER NOT NULL DEFAULT 0,
             habit_id INTEGER REFERENCES habits(id)
         );
+
+        CREATE TABLE IF NOT EXISTS todos (
+            id INTEGER PRIMARY KEY, 
+            task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE, 
+            title TEXT NOT NULL, due_time TEXT
+            status INTEGER NOT NULL DEFAULT 0,
+            due_at TEXT
+        );
+
       
         CREATE TABLE IF NOT EXISTS reference (
            id INTEGER PRIMARY KEY,
@@ -74,7 +83,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         CREATE INDEX IF NOT EXISTS idx_tasks_due_at ON tasks(due_at);
         CREATE INDEX IF NOT EXISTS idx_tasks_habit_id ON tasks(habit_id);
         CREATE INDEX IF NOT EXISTS idx_tasks_group_id ON tasks(group_id);
-        CREATE INDEX IF NOT EXISTS idx_tasks_is_task ON tasks(is_task); 
+        CREATE INDEX IF NOT EXISTS idx_todos_task_id ON todos(task_id); 
         
 
        `);

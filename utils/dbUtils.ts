@@ -12,14 +12,15 @@ export function parseDateFromDB(date: string | null): Date | null {
 
 // Define a function to map a database row to the Task object
 export function mapDBToTodo(row: any): Todo {
+    let task_id = null;
+    row.task_id ? task_id = row.task_id : null; 
+    
     return {
         id: row.id,
+        task_id: task_id,
         title: row.title,
         status: !!row.status,
-        createdAt: parseDateFromDB(row.created_at),
-        completedAt: parseDateFromDB(row.completed_at),
-        isDeleted: !!row.is_deleted,
-        deletedAt: parseDateFromDB(row.deleted_at)
+        dueAt: row.due_at ? formatDateForDB(parseDateFromDB(row.due_at)) : null
     };
 }
 

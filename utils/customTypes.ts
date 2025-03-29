@@ -3,10 +3,8 @@ export interface Todo {
     id: number;
     title: string;
     status?: boolean | false;
-    createdAt?: Date | null;
-    completedAt?: Date | null;
-    isDeleted?: boolean;
-    deletedAt?: Date | null;
+    task_id?: number | null;
+    dueAt?: string | null;
 }
 
 
