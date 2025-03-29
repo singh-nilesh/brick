@@ -7,7 +7,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { useSQLiteContext } from 'expo-sqlite';
 import { addGroup } from '../../../utils/taskService';
 import CalendarDatePicker from '../../../components/CalenderDatePicker';
-
+import { set } from 'date-fns';
 
 interface HabitProps {
     title: string;
@@ -216,8 +216,8 @@ const GroupOverview = () => {
 
             {/* Date Picker */}
             {showDatePicker && selectedTaskIndex !== null && (
-                <CalendarDatePicker visible={showDatePicker} onClose={() => setShowDatePicker(false)} selectedDate={tasks[selectedTaskIndex].dueAt || new Date()} setSelectedDate={handleDateChange} />
-            )}
+                <CalendarDatePicker visible={showDatePicker} onClose={() => setShowDatePicker(false)} 
+                selectedDate={tasks[selectedTaskIndex].dueAt || new Date()} setSelectedDate={handleDateChange} />)}
 
         </View>
     );

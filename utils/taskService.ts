@@ -38,7 +38,7 @@ export const deleteReferences = async (db: SQLiteDatabase, references: any[]) =>
 // Add Tasks
 export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
     const insertQuery = await db.prepareAsync(
-        `INSERT INTO todos (group_id, title, description, comment, priority, due_at, due_at_time, is_task) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO tasks (group_id, title, description, comment, priority, due_at, due_at_time, is_task) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     );
     var TaskId: number;
 
@@ -132,7 +132,7 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
 
     // Insert dynamic tasks if the due date is today
     if (dueAt.toDateString() === new Date().toDateString()) {
-        const insertStmt = await db.prepareAsync(`INSERT INTO todos (title, group_id, due_at, habit_id, is_task, created_at)
+        const insertStmt = await db.prepareAsync(`INSERT INTO tasks (title, group_id, due_at, habit_id, is_task, created_at)
                 VALUES ( $title, $groupId, $dueAt, $habitId, 1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`);
 
         try {
@@ -164,7 +164,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
     try {
         // Fetch all tasks for the given date
         const todoQuery = await db.prepareAsync(
-            `SELECT * FROM todos 
+            `SELECT * FROM tasks 
              WHERE is_deleted = 0 
                AND is_task = 1 
                AND strftime('%Y-%m-%d', due_at) = $date`
@@ -288,7 +288,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 // get tasks & habits by group ->  PROGRESS PAGE
 export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
     const todoQuery = await db.prepareAsync(
-        `SELECT * FROM todos WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
+        `SELECT * FROM tasks WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
     );
     try {
         const todoRows = await todoQuery.executeAsync({ $groupId: selectedGroup.id });
@@ -355,7 +355,7 @@ export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Tas
 
         // Update the task
         const updateQuery = `
-      UPDATE todos 
+      UPDATE tasks 
       SET title = ?, status = ?, description = ?, due_at = ?, comment = ? 
       WHERE id = ?`;
 
@@ -437,14 +437,14 @@ export const getRefLinks = async (db: SQLiteDatabase, from: Date, to: Date) => {
 
     const refQuery = await db.prepareAsync(
         `SELECT
-        todos.id AS task_id,
-        todos.title AS task_title,
+        tasks.id AS task_id,
+        tasks.title AS task_title,
         reference.name AS ref_name,
         reference.url AS ref_url
         FROM reference
-        INNER JOIN todos ON reference.task_id = todos.id
-        WHERE todos.due_at BETWEEN $dt_from AND $dt_to
-        ORDER BY todos.due_at`
+        INNER JOIN tasks ON reference.task_id = tasks.id
+        WHERE tasks.due_at BETWEEN $dt_from AND $dt_to
+        ORDER BY tasks.due_at`
     );
     try {
         const refRows = await refQuery.executeAsync({ $dt_from: dt_from, $dt_to: dt_to });
@@ -469,13 +469,13 @@ export const getGroupOverview = async (db: SQLiteDatabase) => {
             groups.title AS group_title,
             groups.description AS group_description,
             groups.group_bgColor AS group_bgColor,
-            COUNT(todos.id) AS task_count,
-            COUNT(todos.completed_at) AS completed_count
+            COUNT(tasks.id) AS task_count,
+            COUNT(tasks.completed_at) AS completed_count
         FROM groups
-        LEFT JOIN todos ON groups.id = todos.group_id 
-            AND todos.is_task = 1 
-            AND todos.is_deleted = 0 
-            AND todos.habit_id IS NULL
+        LEFT JOIN tasks ON groups.id = tasks.group_id 
+            AND tasks.is_task = 1 
+            AND tasks.is_deleted = 0 
+            AND tasks.habit_id IS NULL
         GROUP BY groups.id`
     );
 
@@ -551,10 +551,10 @@ export const addGroup = async (db: SQLiteDatabase, newGroup: Group, newHabits: H
 
 // Delete Group -- this wont work you have to delete the references as well
 export const deleteGroup = async (db: SQLiteDatabase, groupId: number) => {
-    const getTaskId = await db.prepareAsync(`SELECT id FROM todos WHERE group_id = ?`);
+    const getTaskId = await db.prepareAsync(`SELECT id FROM tasks WHERE group_id = ?`);
     const delGroupQuery = await db.prepareAsync(`DELETE FROM groups WHERE id = ?`);
     const delHabitsQuery = await db.prepareAsync(`DELETE FROM habits WHERE group_id = ?`);
-    const delTasksQuery = await db.prepareAsync(`DELETE FROM todos WHERE group_id = ?`);
+    const delTasksQuery = await db.prepareAsync(`DELETE FROM tasks WHERE group_id = ?`);
 
     try {
         // Delete references

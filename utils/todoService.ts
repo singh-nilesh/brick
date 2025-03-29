@@ -5,7 +5,7 @@ import { formatDateForDB } from "./dbUtils";
 // Add a Todo
 export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<void> => {
     const statement = await db.prepareAsync(
-        `INSERT INTO todos (title)
+        `INSERT INTO tasks (title)
         VALUES ($title)`
     );
     try {
@@ -17,7 +17,7 @@ export const addTodo = async (db: SQLiteDatabase, new_title: string): Promise<vo
 
 // Get Todos
 export const getTodos = async (db: SQLiteDatabase) => {
-    const statement = await db.prepareAsync(`SELECT * FROM todos WHERE is_deleted = 0 AND is_task = 0`);
+    const statement = await db.prepareAsync(`SELECT * FROM tasks WHERE is_deleted = 0 AND is_task = 0`);
     try {
         const result = await statement.executeAsync();
         const rows = await result.getAllAsync();
@@ -30,7 +30,7 @@ export const getTodos = async (db: SQLiteDatabase) => {
 // Update Todo
 export const updateTodo = async (db: SQLiteDatabase, id: number, new_title: string): Promise<void> => {
     const statement = await db.prepareAsync(
-        `UPDATE todos SET title = $task WHERE id = $id`
+        `UPDATE tasks SET title = $task WHERE id = $id`
     );
     try {
         await statement.executeAsync({
@@ -47,7 +47,7 @@ export const updateTodo = async (db: SQLiteDatabase, id: number, new_title: stri
 // Delete Task or todo
 export const markDeleted = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
-        `UPDATE todos SET is_deleted = 1, deleted_at = $deletedAt WHERE id = $id`
+        `UPDATE tasks SET is_deleted = 1, deleted_at = $deletedAt WHERE id = $id`
     );
     try {
         await statement.executeAsync({
@@ -63,7 +63,7 @@ export const markDeleted = async (db: SQLiteDatabase, id: number): Promise<void>
 // Complete Todo or Task
 export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
-        `UPDATE todos SET status = 1, completed_at = $completedAt WHERE id = $id`
+        `UPDATE tasks SET status = 1, completed_at = $completedAt WHERE id = $id`
     );
     try {
         await statement.executeAsync({
@@ -79,7 +79,7 @@ export const markAsDone = async (db: SQLiteDatabase, id: number): Promise<void> 
 // Uncompleted Todo or Task
 export const markAsNotDone = async (db: SQLiteDatabase, id: number): Promise<void> => {
     const statement = await db.prepareAsync(
-        `UPDATE todos SET status = 0, completed_at = NULL WHERE id = $id`
+        `UPDATE tasks SET status = 0, completed_at = NULL WHERE id = $id`
     );
     try {
         await statement.executeAsync({ $id: id });

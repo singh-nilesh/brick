@@ -45,7 +45,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         );
 
 
-            CREATE TABLE IF NOT EXISTS todos (
+        CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY,
             group_id INTEGER REFERENCES groups(id),
             title TEXT NOT NULL,
@@ -61,20 +61,20 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             deleted_at TEXT,
             is_task INTEGER NOT NULL DEFAULT 0,
             habit_id INTEGER REFERENCES habits(id)
-            );
+        );
       
         CREATE TABLE IF NOT EXISTS reference (
            id INTEGER PRIMARY KEY,
-           task_id INTEGER REFERENCES todos(id),
+           task_id INTEGER REFERENCES tasks(id),
            name TEXT NOT NULL,      
            url TEXT NOT NULL,
            created_at TEXT NOT NULL DEFAULT (DATE('now'))
         );
 
-        CREATE INDEX IF NOT EXISTS idx_todos_due_at ON todos(due_at);
-        CREATE INDEX IF NOT EXISTS idx_todos_habit_id ON todos(habit_id);
-        CREATE INDEX IF NOT EXISTS idx_todos_group_id ON todos(group_id);
-        CREATE INDEX IF NOT EXISTS idx_todos_is_task ON todos(is_task); 
+        CREATE INDEX IF NOT EXISTS idx_tasks_due_at ON tasks(due_at);
+        CREATE INDEX IF NOT EXISTS idx_tasks_habit_id ON tasks(habit_id);
+        CREATE INDEX IF NOT EXISTS idx_tasks_group_id ON tasks(group_id);
+        CREATE INDEX IF NOT EXISTS idx_tasks_is_task ON tasks(is_task); 
         
 
        `);
@@ -96,7 +96,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
         // Tasks
         const todoId = (
             await db.runAsync(
-                'INSERT INTO todos (group_id, title, due_at, is_task) VALUES (?, ?, ?, ?) RETURNING id',
+                'INSERT INTO tasks (group_id, title, due_at, is_task) VALUES (?, ?, ?, ?) RETURNING id',
                 habit_groupId, 
                 'User manual',  // title
                 formatDateForDB(new Date()), // due_at
@@ -107,7 +107,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
             // Insert initial data into reference
             await db.runAsync(
                 'INSERT INTO reference (task_id, name, url, created_at) VALUES (?, ?, ?, ?)',
-                todoId, // Foreign key linking to the todos table
+                todoId, // Foreign key linking to the tasks table
                 'User Guide', // name
                 'https://docs.google.com/document/d/1d_TmPfLqCtashhviQN4AeTY6XV1kZyN4byTbltac-q4/edit?usp=sharing',
                 formatDateForDB(new Date())

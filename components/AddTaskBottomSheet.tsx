@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -38,13 +38,22 @@ const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showAddLinkModal, setShowAddLinkModal] = useState(false);
     const [newLink, setNewLink] = useState({ id: null, name: '', url: '' });
+    const taskTitleRef = useRef<TextInput | null>(null);
+
+    // keyboard focus on Title, when modal opens
+    useEffect(() => {
+        if (visible) {
+            setTimeout(() => taskTitleRef.current?.focus(), 100); // Small delay to ensure modal opens first
+        }
+    }, [visible]);
+
 
     const handleSave = () => {
-        if(newTask.title.trim() === ''){
+        if (newTask.title.trim() === '') {
             alert('Please enter a title');
         } else {
-        onSave(newTask);
-        setNewTask(emptyTask);
+            onSave(newTask);
+            setNewTask(emptyTask);
         }
     };
 
@@ -130,6 +139,7 @@ const AddTaskBottomSheet: React.FC<AddTaskBottomSheetProps> = ({ groups, visible
 
                     {/* Task Header */}
                     <TextInput
+                        ref={taskTitleRef}  // Attach ref to input
                         style={styles.Header}
                         value={newTask.title}
                         onChangeText={(text) => setNewTask((obj) => ({ ...obj, title: text }))}

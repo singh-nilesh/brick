@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Group, Habit } from '../utils/customTypes';
@@ -25,10 +25,19 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
         createdAt: new Date(),
         referenceLink: null
     }
-    const [newHabit, setNewHabit] = useState<Habit>(HabitInit);
 
-    const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-    const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+    const [newHabit, setNewHabit] = useState<Habit>(HabitInit);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [dateType, setDateType] = useState<'dtStart' | 'dtEnd' | null>(null);
+    const habitTitleRef = useRef<TextInput | null>(null);
+
+    // keyboard focus on Title, when modal opens
+    useEffect(() => {
+        if (visible) {
+            setTimeout(() => habitTitleRef.current?.focus(), 100); // Small delay to ensure modal opens first
+        }
+    }, [visible]);
+
 
     const handleSave = () => {
         if (!newHabit.title.trim()) {
@@ -57,15 +66,18 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
         }));
     };
 
-    const handleDateChange = (dateType: 'dtStart' | 'dtEnd', selectedDate: Date | undefined) => {
-        if (selectedDate) {
+    const handleDateChange = (selectedDate: Date | undefined) => {
+        if (selectedDate && dateType) {
             setNewHabit((prev) => ({
                 ...prev,
                 [dateType]: selectedDate,
             }));
         }
-        setShowStartDatePicker(false);
-        setShowEndDatePicker(false);
+        else {
+            alert('Select a valid date');
+        }
+        setShowDatePicker(false);
+        setDateType(null);
     };
 
     const renderHabits = () => {
@@ -75,6 +87,7 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
 
                 {/* Habit Title */}
                 <TextInput
+                    ref={habitTitleRef}  // Attach ref to input
                     style={styles.input}
                     placeholder="Habit Title"
                     value={newHabit.title}
@@ -140,29 +153,33 @@ const AddHabitBottomSheet: React.FC<AddHabitBottomSheetProps> = ({ groups, visib
                 {/* Start Date */}
                 <TouchableOpacity
                     style={styles.dateButton}
-                    onPress={() => setShowStartDatePicker(true)}
+                    onPress={() => {
+                        setShowDatePicker(true)
+                        setDateType('dtStart')
+                    }}
                 >
                     <Text style={styles.dateButtonText}>
                         Start Date: {format(newHabit.dtStart, 'dd MMM yyyy')}
                     </Text>
                 </TouchableOpacity>
-                {showStartDatePicker && (
-                    <CalendarDatePicker
-                        selectedDate={newHabit.dtStart}
-                        setSelectedDate={(date) => handleDateChange('dtStart', date)}
-                    />
-                )}
 
                 {/* End Date */}
-                <TouchableOpacity style={styles.dateButton} onPress={() => setShowEndDatePicker(true)}>
+                <TouchableOpacity style={styles.dateButton} onPress={() => {
+                    setShowDatePicker(true)
+                    setDateType('dtEnd')
+                }}>
                     <Text style={styles.dateButtonText}>
                         End Date: {format(newHabit.dtEnd, 'dd MMM yyyy')}
                     </Text>
                 </TouchableOpacity>
-                {showEndDatePicker && (
+
+                {/* date picker */ (
                     <CalendarDatePicker
-                        selectedDate={newHabit.dtEnd}
-                        setSelectedDate={(date) => handleDateChange('dtEnd', date)}
+                        visible={showDatePicker}
+                        selectedDate={newHabit.dtStart}
+                        setSelectedDate={(date) => handleDateChange(date)}
+                        onClose={() => setShowDatePicker(false)}
+
                     />
                 )}
 

@@ -12,7 +12,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 const AddPost = () => {
     const { user } = useUser();
     const [context, setContext] = useState('');
-    const [image, setImage] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [groupList, setGroupList] = useState<Group[]>([]);
     const [groupDetail, setGroupDetail] = useState<{ goalTasks: Task[]; habitList: Habit[] } | null>(null);
@@ -76,54 +75,6 @@ const AddPost = () => {
         }
         : null;
 
-
-    {/*
-    const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        
-        if (status !== 'granted') {
-            Alert.alert("Permission Denied", "You need to grant camera roll permissions to upload an image.");
-            return;
-        }
-    
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
-        });
-    
-        if (!result.canceled) {
-            setImage(result.assets[0].uri);
-        }
-    };
-
-    const uploadImage = async () => {
-        if (!image) {
-            Alert.alert('No image to upload');
-            return null;
-        }
-        
-        const filename = `contextImages/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-        const storageRef = ref(fs_storage, filename);
-        const response = await fetch(image);
-        const blob = await response.blob();
-
-        const uploadTask = uploadBytesResumable(storageRef, blob);
-        
-        return new Promise((resolve, reject) => {
-            uploadTask.on(
-                'state_changed',
-                null,
-                (error) => reject(error),
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    resolve(downloadURL);
-                }
-            );
-        });
-    };
-    */}
-
     const handlePost = async () => {
         if (!context.trim()) {
             Alert.alert('Error', 'Context cannot be empty');
@@ -144,7 +95,6 @@ const AddPost = () => {
             });
             Alert.alert('Success', 'Post published successfully');
             setContext('');
-            setImage(null);
             router.back();
         } catch (error) {
             Alert.alert('Error', 'Something went wrong while posting');
@@ -185,7 +135,7 @@ const AddPost = () => {
                 </View>
             </View>
 
-{/*
+            {/*
             <TouchableOpacity onPress={() => Alert.alert('Alert', 'Image picker pressed')} style={styles.imagePicker}>
                 <MaterialIcons name="add-a-photo" size={24} color="black" />
                 <Text>Pick an Image</Text>
@@ -193,7 +143,7 @@ const AddPost = () => {
             
             {image && <Image source={{ uri: image }} style={styles.previewImage} />}
 */}
-            
+
             <TouchableOpacity style={styles.postButton} onPress={handlePost} disabled={uploading}>
                 <Feather name="send" size={24} color="white" />
                 <Text style={styles.buttonText}>{uploading ? 'Uploading...' : 'Post'}</Text>
