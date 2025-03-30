@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { Task } from '../utils/customTypes';
+import { Task, Todo } from '../utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
 import CalendarDatePicker from './CalenderDatePicker';
 import { format } from 'date-fns';
@@ -13,10 +13,11 @@ import { SQLiteDatabase } from 'expo-sqlite';
 
 
 interface EditTaskBottomSheetProps {
+
     db: SQLiteDatabase;
     task: Task | null;
     visible: boolean;
-    onClose: () => void;
+    onClose: (refreshDb: boolean) => void;
     onSave: (updatedTask: Task) => void;
 }
 
@@ -28,18 +29,17 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showAddLinkModal, setShowAddLinkModal] = useState(false);
     const [newLink, setNewLink] = useState({ id: null, name: '', url: '' });
+    const [refresh, setRefresh] = useState(false);
 
     const handleSave = () => {
         onSave(editedTask);
         setIsEditing(false);
     };
 
-    const handleDateChange = (event: any, selectedDate: Date | undefined) => {
-        setShowDatePicker(false);
-        if (selectedDate) {
-            setEditedTask((obj) => ({ ...obj, dueAt: selectedDate }));
-        }
-    };
+    const handleClose = () => {
+        onClose(refresh);
+        setIsEditing(false);
+    }
 
     const handleAddLink = () => {
         if (newLink.name.trim() && newLink.url.trim()) {
@@ -52,6 +52,7 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
         }
     };
 
+    // function to remove a link, temporary until save
     const handelRemoveLink = (id: number | null, name: string) => {
         if (id) {
             setEditedTask((obj) => ({
@@ -66,6 +67,15 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
             }));
         }
 
+    }
+
+    // function to remove a Subtask, temporary until save
+    const handelRemoveSubtask = (id: number) => {
+        console.log(id);
+        setEditedTask((obj) => ({
+            ...obj,
+            subtasks: obj.subtasks ? obj.subtasks.filter((subtask) => subtask.id != id) : []
+        }));
     }
 
     const renderItem = () => {
@@ -140,12 +150,15 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
 
                     {/* Subtask */}
                     <Text style={styles.subHeader}>Subtask:</Text>
-                    <View style={styles.subTaskContainer}>
+                    <View style={styles.subContainer}>
                         <SubTaskList
                             task_id={editedTask.id}
                             subtasks={editedTask.subtasks || []}
                             db={db}
-                            setSubtasks={(updatedSubtasks) => setEditedTask((obj) => ({ ...obj, subtasks: updatedSubtasks }))}
+                            isEditing={isEditing}
+                            refreshDb={(val) => setRefresh(val)}
+                            onRemove={(id) => handelRemoveSubtask(id)}
+                            updateSource={(item: Todo[]) => { setEditedTask((obj) => ({ ...obj, subtasks: item })); }}
                         />
                     </View>
 
@@ -175,7 +188,10 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                             />
                         )}
                     </View>
-                    <ReferenceLinks links={editedTask.references} isEditing={isEditing} onRemove={(id, name) => handelRemoveLink(id, name)} />
+                    <View style={styles.subContainer}>
+                        <ReferenceLinks links={editedTask.references} isEditing={isEditing} onRemove={(id, name) => handelRemoveLink(id, name)} />
+                    </View>
+
 
                     {/* Save Button */}
                     {isEditing ? (
@@ -202,13 +218,13 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
                 animationType="slide"
                 transparent={true}
                 visible={visible}
-                onRequestClose={onClose}
+                onRequestClose={handleClose}
             >
                 <KeyboardAvoidingView
                     style={styles.backdrop}
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
-                    <TouchableOpacity style={styles.touchableArea} onPress={onClose} />
+                    <TouchableOpacity style={styles.touchableArea} onPress={handleClose} />
 
                     {/* Task Details */}
                     {renderItem()}
@@ -281,7 +297,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        height: '75%',
+        height: '85%',
         padding: 20,
     },
     badgeContainer: {
@@ -325,12 +341,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 10,
     },
-    subTaskContainer: {
+    subContainer: {
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 5,
         padding: 10,
-        height: 150,
         marginBottom: 10,
     },
     saveButton: {

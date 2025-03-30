@@ -6,22 +6,24 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Todo } from '../utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { markAsDone, markAsNotDone } from '../utils/todoService';
+import { ref } from 'firebase/storage';
 
 interface TodoListItemsProps {
     db: SQLiteDatabase;
     item: Todo;
-    setTasks: React.Dispatch<React.SetStateAction<Todo[]>>;
-    onDelete: () => void;
+    updateTasks: React.Dispatch<React.SetStateAction<Todo[]>>;
+    onDelete?: () => void;
     onEdit: (newTask: string) => void;
     isSubtask?: boolean;
+    refreshDb?: (val: boolean) => void;
 }
 
-const TodoListItems = ({isSubtask, db, item, setTasks, onDelete, onEdit }: TodoListItemsProps) => {
+const TodoListItems = ({isSubtask, db, item, updateTasks, onDelete, onEdit, refreshDb }: TodoListItemsProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState<string>(item.title);
 
     const handleIsDone = (id: number) => {
-            setTasks((currentTasks) => {
+            updateTasks((currentTasks) => {
                 const updatedTasks = currentTasks.map((task) =>
                     task.id === id ? { ...task, status: !task.status } : task
                 );
@@ -37,6 +39,8 @@ const TodoListItems = ({isSubtask, db, item, setTasks, onDelete, onEdit }: TodoL
                         }
                     })();
                 }
+
+                refreshDb && refreshDb(true);
     
                 return updatedTasks;
             });
@@ -60,7 +64,7 @@ const TodoListItems = ({isSubtask, db, item, setTasks, onDelete, onEdit }: TodoL
                         name={item.status ? 'check-circle' : 'circle'}
                         size={24}
                         color={item.status ? 'grey' : 'black'}
-                        style={{ marginRight: 10 }}
+                        style={{ marginRight: 10}}
                     />
                 </Pressable>
 
@@ -108,6 +112,7 @@ const styles = StyleSheet.create({
         color: 'black',
         flex: 1,
         paddingRight: 40,
+        paddingTop: 4
     },
     input: {
         borderBottomWidth: 0,

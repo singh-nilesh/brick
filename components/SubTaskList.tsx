@@ -1,72 +1,91 @@
-import { ScrollView, StyleSheet, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import { StyleSheet, View } from 'react-native'
+import React, { useState } from 'react'
 import { Todo } from '@/utils/customTypes'
-import { addSubtask, deleteSubtask, getSubtasks, markDeleted, updateSubtask } from '@/utils/todoService';
+import { addSubtask, getSubtasks, updateSubtask } from '@/utils/todoService';
 import FooterTaskInput from './FooterTaskInput';
 import TodoListItems from './TodoListItems';
 import { SQLiteDatabase } from 'expo-sqlite';
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface SubTaskListProps {
     task_id: number
     subtasks: Todo[]
     db: SQLiteDatabase
-    setSubtasks: (todos: Todo[]) => void
+    isEditing: boolean
+    updateSource: (Todos: Todo[]) => void
+    onRemove: (id: number) => void
+    refreshDb: (val: boolean) => void
 }
 
-const SubTaskList = ({ task_id, subtasks, setSubtasks, db }: SubTaskListProps) => {
+const SubTaskList = ({ task_id, subtasks, isEditing, onRemove, refreshDb, updateSource, db }: SubTaskListProps) => {
 
     const [todos, setTodos] = useState<Todo[]>(subtasks);
 
-    useCallback(() => {
-        setSubtasks(todos);
-    }
-        , [setTodos])
-
-    // function to refetch the subtasks
-    const fetchSubtasks = async () => {
-        setTodos(await getSubtasks(db, task_id));
-    }
-
-
-    // Function to delete a todo
-    const DeleteTask = async (id: number) => {
-        await deleteSubtask(db, id);
-        fetchSubtasks();
+    const newTodoTemplate = {
+        id: 0,
+        title: '',
+        status: false,
+        task_id: task_id,
+        dueAt: null,
     };
 
     // Function to update a todo
     const EditTask = async (item: Todo, Text: string) => {
         item.title = Text;
-        await updateSubtask(db, item);
-        fetchSubtasks();
+        const res = await updateSubtask(db, item);
+        if (res === 1) {
+            setTodos(todos.map((todo) => {
+                if (todo.id === item.id) {
+                    return { ...todo, title: Text };
+                }
+                return todo;
+            }));
+        }
+        updateSource(todos);
+        refreshDb(true);
     };
 
     // Function to add a new todo
     const handleAddTodo = async (newTodo: string) => {
-        console.log(newTodo);
-        await addSubtask(db, task_id, newTodo)
-        fetchSubtasks();
+        const newId = await addSubtask(db, task_id, newTodo)
+        if (newId !== -1) {
+            const newTodoItem = { ...newTodoTemplate, id: newId, title: newTodo };
+            setTodos([...todos, newTodoItem]);
+        }
+        updateSource(todos);
+        refreshDb(true);
     };
 
     return (
-        <ScrollView
-            style={styles.taskView}
-            scrollEnabled={true}
-            keyboardShouldPersistTaps="handled"
-        >
+        <View>
             {todos.map((item) => (
-                <TodoListItems
-                    isSubtask={true}
-                    key={item.id}
-                    db={db}
-                    item={item}
-                    setTasks={setTodos}
-                    onDelete={() => DeleteTask(item.id)}
-                    onEdit={(newTask: string) => EditTask(item, newTask)}
-                />
+                <View
+                    style={[styles.taskView, isEditing ?
+                        { borderBottomWidth: 1, borderColor: "#f0f0f0" }: {}]}
+                    key={item.id}>
+                    <TodoListItems
+                        isSubtask={true}
+                        key={item.id}
+                        db={db}
+                        item={item}
+                        updateTasks={setTodos}
+                        refreshDb={refreshDb}
+                        onEdit={(newTask: string) => EditTask(item, newTask)}
+                    />
+                    {isEditing && (
+                        <MaterialIcons
+                        style={{ paddingTop: 5 }}
+                            name="remove-circle-outline"
+                            size={25}
+                            color="red"
+                            onPress={() => onRemove(item.id)}
+                        />
+                    )}
+
+                </View>
             ))}
             <FooterTaskInput onAdd={(newTodo: string) => handleAddTodo(newTodo)} />
-        </ScrollView>
+        </View>
     );
 }
 
@@ -77,7 +96,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     taskView: {
-        flexDirection: 'column',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         backgroundColor: 'transparent',
     },
 })

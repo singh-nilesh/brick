@@ -11,43 +11,27 @@ interface ReferenceLinksProps {
 
 const ReferenceLinks = ({ links, isEditing, onRemove }: ReferenceLinksProps) => {
 
-    const openLink = async (url: string) => {
-        const supported = await Linking.canOpenURL(url);
-        if (supported) {
-            await Linking.openURL(url);
-        } else {
-            alert(`Cannot open this URL: ${url}`);
-        }
-    };
-
-    // function to remove link from list
-    const handelRemoveLink = (id:number | null, name:string) => {
-        if(id) {
-            
-        }
-    }
-
     return (
-        <View style={styles.container}>
-        {links.map((link, index) => (
-            <View style={{ flexDirection: 'row' }} key={index}>
-                <TouchableOpacity
-                    style={styles.linkContainer}
-                    onPress={() => Linking.openURL(link.url)}
-                >
-                    <Text style={styles.linkText}>{index + 1}. {link.name}</Text>
-                </TouchableOpacity>
-                {isEditing && (
-                    <MaterialIcons
-                        name="remove-circle-outline"
-                        size={25}
-                        color="red"
-                        onPress={() => onRemove(link.id, link.name)}
-                    />
-                )}
-            </View>
-        ))}
-    </View>
+        <View>
+            {links.map((link, index) => (
+                <View style={{ flexDirection: 'row' }} key={index}>
+                    <TouchableOpacity
+                        style={styles.linkContainer}
+                        onPress={() => Linking.openURL(link.url)}
+                    >
+                        <Text style={styles.linkText}>{index + 1}. {link.name}</Text>
+                    </TouchableOpacity>
+                    {isEditing && (
+                        <MaterialIcons
+                            name="remove-circle-outline"
+                            size={25}
+                            color="red"
+                            onPress={() => onRemove(link.id, link.name)}
+                        />
+                    )}
+                </View>
+            ))}
+        </View>
     );
 };
 

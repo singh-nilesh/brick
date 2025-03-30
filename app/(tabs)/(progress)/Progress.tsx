@@ -4,7 +4,7 @@ import { format, isPast, isToday, set } from 'date-fns';
 import { Group, Task } from '../../../utils/customTypes';
 import { getGroups, getFullGroup, updateTask } from '../../../utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
-import TaskBottomSheet from '../../../components/EditTaskBottomSheet';
+import EditTaskBottomSheet from '../../../components/EditTaskBottomSheet';
 import { useFocusEffect } from 'expo-router';
 
 const getCircleColor = (dueDate: Date, done: boolean) => {
@@ -138,11 +138,12 @@ const Progress = () => {
         />
       </View>
 
-      <TaskBottomSheet
+      <EditTaskBottomSheet
         db={db}
         task={selectedTask}
         visible={showTaskBottomSheet}
-        onClose={() => {
+        onClose={(val) => {
+          val && setRefreshDB(!refreshDB);
           setShowTaskBottomSheet(false);
           setSelectedTask(null);
         }}

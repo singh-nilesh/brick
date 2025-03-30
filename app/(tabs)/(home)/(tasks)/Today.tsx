@@ -31,7 +31,7 @@ const Today = () => {
   );
 
 
-  // Function to delete a todo
+  // Function to delete a task
   const DeleteTask = async (id: number) => {
     await markDeleted(db, id);
     setRefreshDB(!refreshDB);
@@ -57,7 +57,8 @@ const Today = () => {
   };
 
   //close Task details
-  const closeModal = () => {
+  const closeModal = (refreshDb: boolean) => {
+    refreshDb && setRefreshDB(!refreshDB);
     setShowTaskBottomSheet(false);
     setSelectedTask(null);
   }
@@ -66,9 +67,8 @@ const Today = () => {
   // Update Task
   const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
     if (!oldTask || !newTask) return;
-    closeModal();
+    closeModal(true);
     await updateTask(db, oldTask, newTask);
-    setRefreshDB(!refreshDB);
   }
 
   return (
@@ -110,7 +110,7 @@ const Today = () => {
         db={db}
         task={selectedTask}
         visible={showTaskBottomSheet}
-        onClose={closeModal}
+        onClose={(val: boolean) => closeModal(val)}
         onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask)} />
     </View>
   );

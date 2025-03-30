@@ -59,7 +59,7 @@ const TodoScreen = () => {
                     <TodoListItems
                         db={db}
                         item={item}
-                        setTasks={setTodos}
+                        updateTasks={setTodos}
                         onDelete={() => DeleteTask(item.id)}
                         onEdit={(newTask: string) => EditTask(item.id, newTask)}
                     />

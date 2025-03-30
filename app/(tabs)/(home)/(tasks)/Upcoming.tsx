@@ -5,7 +5,7 @@ import HeaderDatePicker from '../../../../components/HeaderDatePicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import TaskListItems from '../../../../components/TaskListItems';
-import { Task } from '../../../../utils/customTypes';
+import { Task, Todo } from '../../../../utils/customTypes';
 import EditTaskBottomSheet from '../../../../components/EditTaskBottomSheet';
 import { getTasksForDate, updateTask } from '../../../../utils/taskService';
 import { markDeleted } from '../../../../utils/todoService';
@@ -33,9 +33,8 @@ const Upcoming = () => {
         }, [db, refreshDB, selectedDate])
     );
 
-    // Function to delete a todo
+    // Function to delete a task
     const DeleteTask = async (id: number) => {
-        // setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
         await markDeleted(db, id);
         setRefreshDB(!refreshDB);
     };
@@ -47,7 +46,8 @@ const Upcoming = () => {
     };
 
     //close Task details
-    const closeModal = () => {
+    const closeModal = (refreshDb: boolean) => {
+        refreshDb && setRefreshDB(!refreshDB);
         setShowTaskBottomSheet(false);
         setSelectedTask(null);
     }
@@ -55,10 +55,10 @@ const Upcoming = () => {
     // Update Task
     const handelUpdateTask = async (oldTask: Task, newTask: Task) => {
         if (!oldTask || !newTask) return;
-        closeModal();
         await updateTask(db, oldTask, newTask);
-        setRefreshDB(!refreshDB);
+        closeModal(true);
     }
+
 
     return (
         <View style={styles.container}>
@@ -99,7 +99,7 @@ const Upcoming = () => {
                 db={db}
                 task={selectedTask}
                 visible={showTaskBottomSheet}
-                onClose={closeModal}
+                onClose={(val) => closeModal(val)}
                 onSave={(updatedTask) => selectedTask && handelUpdateTask(selectedTask, updatedTask)}
             />
         </View>

@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 5,
+        paddingBottom: 10,
     },
     input: {
         fontFamily: 'InterSemi',
