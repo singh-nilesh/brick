@@ -5,11 +5,12 @@ import Feather from '@expo/vector-icons/Feather';
 import { Task, Todo } from '../utils/customTypes';
 import ReferenceLinks from './ReferenceLinks';
 import CalendarDatePicker from './CalenderDatePicker';
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
 import SubTaskList from './SubTaskList';
 import { SQLiteDatabase } from 'expo-sqlite';
+import { addSubtask, markAsDone, markAsNotDone } from '../utils/todoService';
 
 
 interface EditTaskBottomSheetProps {
@@ -69,14 +70,57 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
 
     }
 
-    // function to remove a Subtask, temporary until save
-    const handelRemoveSubtask = (id: number) => {
-        console.log(id);
+    // Subtask Handler
+    const newTodoTemplate = {
+        id: 0,
+        title: '',
+        status: false,
+        task_id: editedTask.id,
+        dueAt: null,
+    };
+
+    // remove a Subtask, temporary until save
+    const handelRemoveSubtask = (item: Todo) => {
         setEditedTask((obj) => ({
             ...obj,
-            subtasks: obj.subtasks ? obj.subtasks.filter((subtask) => subtask.id != id) : []
+            subtasks: obj.subtasks.filter((subtask) => subtask.id != item.id)
         }));
     }
+
+    // Function to add a new todo
+    const handleAddTodo = async (newTodo: string) => {
+        const newId = await addSubtask(db, editedTask.id, newTodo)
+        if (newId !== -1) {
+            setEditedTask(
+                (obj) => ({
+                    ...obj,
+                    subtasks: [...obj.subtasks, { ...newTodoTemplate, id: newId, title: newTodo }]
+                })
+            )
+        }
+        setRefresh(true);
+    };
+
+    // mak sub task as done
+    const handleIsDone = async (item: Todo) => {
+        const newStatus = !item.status;
+        if (newStatus) {
+            await markAsDone(db, item.id, true);
+
+        } else {
+            await markAsNotDone(db, item.id, true);
+        }
+
+        setEditedTask(
+            (obj) => ({
+                ...obj,
+                subtasks: obj.subtasks.map((subtask) => subtask.id === item.id ? {...subtask, status:newStatus} : subtask)
+            })
+        )
+        setRefresh(true);
+    }
+
+
 
     const renderItem = () => {
         return (
@@ -149,18 +193,20 @@ const EditTaskBottomSheet: React.FC<EditTaskBottomSheetProps> = ({ task, visible
 
 
                     {/* Subtask */}
-                    <Text style={styles.subHeader}>Subtask:</Text>
+                    <Text style={styles.subHeader}>Subtasks:</Text>
                     <View style={styles.subContainer}>
                         <SubTaskList
                             task_id={editedTask.id}
                             subtasks={editedTask.subtasks || []}
                             db={db}
                             isEditing={isEditing}
-                            refreshDb={(val) => setRefresh(val)}
-                            onRemove={(id) => handelRemoveSubtask(id)}
-                            updateSource={(item: Todo[]) => { setEditedTask((obj) => ({ ...obj, subtasks: item })); }}
+                            onAdd={(newTodo: string) => handleAddTodo(newTodo)}
+                            //onEdit={(newTitle: string, item: Todo) => handelEditSubtask(item, newTitle)}
+                            onDelete={(item: Todo) => handelRemoveSubtask(item)}
+                            onMarkDone={(item: Todo) => handleIsDone(item)}
                         />
                     </View>
+
 
                     {/* Comment */}
                     <Text style={styles.subHeader}>Comment:</Text>

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native'
 import React, { useState } from 'react'
 import { Todo } from '@/utils/customTypes'
-import { addSubtask, getSubtasks, updateSubtask } from '@/utils/todoService';
+import { addSubtask, updateSubtask } from '@/utils/todoService';
 import FooterTaskInput from './FooterTaskInput';
 import TodoListItems from './TodoListItems';
 import { SQLiteDatabase } from 'expo-sqlite';
@@ -12,53 +12,17 @@ interface SubTaskListProps {
     subtasks: Todo[]
     db: SQLiteDatabase
     isEditing: boolean
-    updateSource: (Todos: Todo[]) => void
-    onRemove: (id: number) => void
-    refreshDb: (val: boolean) => void
+    onAdd: (newTodo: string) => void
+    onEdit?: (newTask: string, item: Todo) => void
+    onMarkDone: (item:Todo) => void
+    onDelete: (item:Todo) => void
 }
 
-const SubTaskList = ({ task_id, subtasks, isEditing, onRemove, refreshDb, updateSource, db }: SubTaskListProps) => {
-
-    const [todos, setTodos] = useState<Todo[]>(subtasks);
-
-    const newTodoTemplate = {
-        id: 0,
-        title: '',
-        status: false,
-        task_id: task_id,
-        dueAt: null,
-    };
-
-    // Function to update a todo
-    const EditTask = async (item: Todo, Text: string) => {
-        item.title = Text;
-        const res = await updateSubtask(db, item);
-        if (res === 1) {
-            setTodos(todos.map((todo) => {
-                if (todo.id === item.id) {
-                    return { ...todo, title: Text };
-                }
-                return todo;
-            }));
-        }
-        updateSource(todos);
-        refreshDb(true);
-    };
-
-    // Function to add a new todo
-    const handleAddTodo = async (newTodo: string) => {
-        const newId = await addSubtask(db, task_id, newTodo)
-        if (newId !== -1) {
-            const newTodoItem = { ...newTodoTemplate, id: newId, title: newTodo };
-            setTodos([...todos, newTodoItem]);
-        }
-        updateSource(todos);
-        refreshDb(true);
-    };
-
+const SubTaskList = ({ subtasks, isEditing,onDelete, onEdit, onMarkDone, onAdd, db }: SubTaskListProps) => {
+    
     return (
         <View>
-            {todos.map((item) => (
+            {subtasks.map((item) => (
                 <View
                     style={[styles.taskView, isEditing ?
                         { borderBottomWidth: 1, borderColor: "#f0f0f0" }: {}]}
@@ -68,9 +32,8 @@ const SubTaskList = ({ task_id, subtasks, isEditing, onRemove, refreshDb, update
                         key={item.id}
                         db={db}
                         item={item}
-                        updateTasks={setTodos}
-                        refreshDb={refreshDb}
-                        onEdit={(newTask: string) => EditTask(item, newTask)}
+                        markDone={(item) => onMarkDone(item)}
+                        //onEdit={(newTitle, item) => onEdit(newTitle, item)}
                     />
                     {isEditing && (
                         <MaterialIcons
@@ -78,13 +41,13 @@ const SubTaskList = ({ task_id, subtasks, isEditing, onRemove, refreshDb, update
                             name="remove-circle-outline"
                             size={25}
                             color="red"
-                            onPress={() => onRemove(item.id)}
+                            onPress={() => onDelete(item)}
                         />
                     )}
 
                 </View>
             ))}
-            <FooterTaskInput onAdd={(newTodo: string) => handleAddTodo(newTodo)} />
+            <FooterTaskInput onAdd={(newTodo: string) => onAdd(newTodo)} />
         </View>
     );
 }

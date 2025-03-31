@@ -11,7 +11,7 @@ export function parseDateFromDB(date: string | null): Date | null {
 }
 
 // Define a function to map a database row to the Task object
-export function mapDBToTodo(row: any): Todo {
+export const mapDBToTodo = (row: any): Todo => {
     let task_id = null;
     row.task_id ? task_id = row.task_id : null; 
     

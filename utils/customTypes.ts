@@ -21,7 +21,7 @@ export interface Task {
     completedAt?: Date | null;
     isDeleted: boolean;
     deletedAt?: Date | null;
-    subtasks: Todo[] | null;
+    subtasks: Todo[] | [];
     group: {
         id: number;
         title: string;
@@ -59,4 +59,10 @@ export interface Habit {
     dtStart: Date;
     dtEnd: Date;
     referenceLink: string | null;
+}
+
+export interface ReferenceProps {
+    id: number;
+    name: string;
+    url: string;
 }

@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react'
 import { Todo } from '../../../../utils/customTypes';
 import TodoListItems from '../../../../components/TodoListItems';
 import { useSQLiteContext } from 'expo-sqlite';
-import { addTodo, getTodos, markDeleted, updateTodo } from '../../../../utils/todoService';
+import { addTodo, getTodos, markAsDone, markAsNotDone, markDeleted, updateTodo } from '../../../../utils/todoService';
 import FooterTaskInput from '../../../../components/FooterTaskInput';
 import { useFocusEffect } from 'expo-router';
 
@@ -29,15 +29,20 @@ const TodoScreen = () => {
 
     // Function to delete a todo
     const DeleteTask = async (id: number) => {
-        // setTodos((currentTodo) => currentTodo.filter((_, i) => i !== index));
         await markDeleted(db, id);
-        setRefreshDB(!refreshDB);
+        setTodos(todos.filter((item) => item.id !== id));
     };
 
     // Function to update a todo
     const EditTask = async (id: number, Text: string) => {
         await updateTodo(db, id, Text);
-        setRefreshDB(!refreshDB);
+        setTodos(todos.map((item) => {
+            if (item.id === id) {
+                item.title = Text;
+            }
+            return item;
+        }
+        ));
     };
 
     // Function to add a new todo
@@ -45,6 +50,19 @@ const TodoScreen = () => {
         await addTodo(db, newTodo);
         setRefreshDB(!refreshDB);
     };
+
+    // mak sub task as done
+    const handleIsDone = async (item: Todo) => {
+        const newStatus = !item.status;
+        if (newStatus) {
+            await markAsDone(db, item.id);
+
+        } else {
+            await markAsNotDone(db, item.id);
+        }
+        setRefreshDB(!refreshDB);
+    }
+
 
 
     return (
@@ -59,8 +77,8 @@ const TodoScreen = () => {
                     <TodoListItems
                         db={db}
                         item={item}
-                        updateTasks={setTodos}
-                        onDelete={() => DeleteTask(item.id)}
+                        markDone={(item) => handleIsDone(item)}
+                        onDelete={(item) => DeleteTask(item.id)}
                         onEdit={(newTask: string) => EditTask(item.id, newTask)}
                     />
                 }

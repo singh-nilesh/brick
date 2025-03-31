@@ -1,11 +1,12 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { format, isPast, isToday, set } from 'date-fns';
-import { Group, Task } from '../../../utils/customTypes';
+import { Group, Habit, Task } from '../../../utils/customTypes';
 import { getGroups, getFullGroup, updateTask } from '../../../utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
 import EditTaskBottomSheet from '../../../components/EditTaskBottomSheet';
 import { useFocusEffect } from 'expo-router';
+import HabitSummary from '@/components/HabitSummary';
 
 const getCircleColor = (dueDate: Date, done: boolean) => {
   if ((isPast(dueDate) || isToday(dueDate)) && done === true) return '#77B254'; // Green
@@ -23,6 +24,9 @@ const Progress = () => {
   const db = useSQLiteContext();
   const [Groups, setGroups] = useState<Group[]>([]);
   const [Tasks, setTasks] = useState<Task[]>([]);
+  const [Habits, setHabits] = useState<Task[]>([]);
+  const [habitList, setHabitList] = useState<Habit[]>([]);
+
   const [showTaskBottomSheet, setShowTaskBottomSheet] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
@@ -37,9 +41,17 @@ const Progress = () => {
   const fetchTasks = async () => {
     if (activeGroup) {
       const group = await getFullGroup(db, activeGroup);
-      setTasks(group.goalTasks);
+  
+      // Goal tasks are those that DO NOT have a habit
+      setTasks(group.goalTasks.filter((task) => task.habit === null));
+  
+      // Habit tasks are those that HAVE a habit
+      setHabits(group.goalTasks.filter((task) => task.habit !== null));
+  
+      setHabitList(group.habitList);
     }
   };
+  
 
   useFocusEffect(
     useCallback(() => {
@@ -134,8 +146,14 @@ const Progress = () => {
             <RefreshControl refreshing={false} onRefresh={() => setRefreshDB(!refreshDB)} />
           }
 
-          ListFooterComponent={<View style={{ height: 100 }} />} // Add padding to the bottom
-        />
+          ListFooterComponent={
+            <View style={{ marginVertical: 50, paddingBottom:60 }}>
+              <HabitSummary taskList={Tasks} habitList={habitList} />
+            </View>
+          } />
+
+
+        {/* Habit list */}
       </View>
 
       <EditTaskBottomSheet

@@ -1,10 +1,9 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { mapDBToHabit, mapDBToTask } from "./dbUtils";
+import { mapDBToHabit, mapDBToTask, mapDBToTodo } from "./dbUtils";
 import { formatDateForDB } from "./dbUtils";
-import { Group, Habit, Task, Todo } from "./customTypes";
+import { Group, Habit, Task, Todo, ReferenceProps } from "./customTypes";
 import { ToastAndroid } from "react-native";
-import { addSubtask } from "./todoService";
-import { sub } from "date-fns";
+import { addSubtask, getSubtasks } from "./todoService";
 
 // Function to insert references
 export const insertReferences = async (db: SQLiteDatabase, taskId: number | null, references: any[]) => {
@@ -38,7 +37,7 @@ export const deleteReferences = async (db: SQLiteDatabase, references: any[]) =>
 }
 
 // Function to insert SubTask list
-export const addSubTaskList = async (db: SQLiteDatabase,task_id: number, SubTask: Todo[]) => {
+export const addSubTaskList = async (db: SQLiteDatabase, task_id: number, SubTask: Todo[]) => {
     for (const subTask of SubTask) {
         await addSubtask(db, task_id, subTask.title);
     }
@@ -117,6 +116,7 @@ const generateDynamicTasks = async (db: SQLiteDatabase, Habits: any[], dueDate: 
                     deleted_at: null,
                     is_task: 1,
                     habit_id: habit.id,
+                    subtasks: [],
                     group: habit.groupId
                         ? {
                             group_title: habit.group_title,
@@ -166,6 +166,8 @@ const mergeTasks = async (tasks: any[], dynamicTasks: any[], dueAt: Date, db: SQ
     }
     return [...tasks, ...dynamicTasks];
 };
+
+
 
 // Get Tasks
 export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
@@ -225,79 +227,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
         }
 
         // Fetch task details
-        const taskDetails = await Promise.all(
-            (await tasks).map(async (row: any) => {
-                let group = null;
-                let habit = null;
-                let references = null;
-                let subtasks = null;
-
-                // Fetch group details if group_id is not null
-                if (row.group_id) {
-                    const groupQuery = await db.prepareAsync(
-                        `SELECT title AS group_title, group_bgColor, group_textColor FROM groups WHERE id = $groupId;`
-                    );
-                    try {
-                        const groupRows = await groupQuery.executeAsync({ $groupId: row.group_id });
-                        group = await groupRows.getFirstAsync();
-                    } finally {
-                        await groupQuery.finalizeAsync();
-                    }
-                }
-
-                // Fetch habit details if habit_id is not null
-                if (row.habit_id) {
-                    let tempHabit = habitRows.find((habit: any) => habit.id === row.habit_id);
-                    habit = {
-                        id: row.habit_id,
-                        title: (tempHabit as any).title,
-                    }
-                }
-
-                // Fetch references
-                const refQuery = await db.prepareAsync(
-                    `SELECT id,name,url FROM reference WHERE task_id = $todoId;`
-                );
-                try {
-                    const refRows = await refQuery.executeAsync({ $todoId: row.id });
-                    references = (await refRows.getAllAsync())
-                        .filter((ref: any) => ref.url && ref.url.trim() !== '')
-                        .map((ref: any) => ({
-                            id: ref.id,
-                            name: ref.name,
-                            url: ref.url,
-                        }));
-                } finally {
-                    await refQuery.finalizeAsync();
-                }
-
-                // Fetch subtasks
-                const subTaskQuery = await db.prepareAsync(
-                    `SELECT * FROM todos WHERE task_id = $taskId`
-                );
-                try {
-                    const subTaskRows = await subTaskQuery.executeAsync({ $taskId: row.id });
-                    subtasks = (await subTaskRows.getAllAsync()).map((subtask: any) => ({
-                        id: subtask.id,
-                        title: subtask.title,
-                        status: subtask.status,
-                        dueAt: subtask.due_at,
-                    }));
-                } finally {
-                    await subTaskQuery.finalizeAsync();
-                }
-
-                const data = {
-                    ...row,
-                    subtasks, 
-                    group: group ? group : null,
-                    habit: habit ? habit : null,
-                    references,
-                };
-                //console.log(data);
-                return data;
-            })
-        );
+        const taskDetails = await fetchTaskDetails(db, tasks, habitRows);
 
         // Merge tasks and dynamic tasks
         const finalTasks = await mergeTasks(taskDetails, dynamicTasks ?? [], dueDate, db)
@@ -316,50 +246,24 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 // get tasks & habits by group ->  PROGRESS PAGE
 export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
     const todoQuery = await db.prepareAsync(
-        `SELECT * FROM tasks WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS NULL ORDER BY due_at`
+        `SELECT * FROM tasks WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 ORDER BY due_at`
     );
+
+    // Fetch habits
+    const habitQuery = await db.prepareAsync(`SELECT * FROM habits WHERE group_id = $groupId`);
+    const habits = await habitQuery.executeAsync({ $groupId: selectedGroup.id });
+    const habitRows = await habits.getAllAsync();
+    const habitList = habitRows.map(mapDBToHabit);
+
     try {
-        const todoRows = await todoQuery.executeAsync({ $groupId: selectedGroup.id });
-        const taskDetails = await Promise.all(
-            (await todoRows.getAllAsync()).map(async (row: any) => {
-                let group = selectedGroup;
-                let habit = null;
-                let references = null;
+        let Rows = (await todoQuery.executeAsync({ $groupId: selectedGroup.id }))
+        const todoRows = await Rows.getAllAsync();
 
-                // Fetch references
-                const refQuery = await db.prepareAsync(
-                    `SELECT id,name,url FROM reference WHERE task_id = $todoId;`
-                );
-                try {
-                    const refRows = await refQuery.executeAsync({ $todoId: row.id });
-                    references = (await refRows.getAllAsync()).map((ref: any) => ({
-                        id: ref.id,
-                        name: ref.name,
-                        url: ref.url,
-                    }));
-                } finally {
-                    await refQuery.finalizeAsync();
-                }
+        // fetch task details
+        const taskDetails = await fetchTaskDetails(db, todoRows, habitRows);
 
-                const data = {
-                    ...row,
-                    group: group ? group : null,
-                    habit: habit ? habit : null,
-                    references,
-                };
-                //console.log(data);
-                return data;
-            })
-        );
+
         const goalTasks = taskDetails.map(mapDBToTask);
-
-        // Fetch habits
-        const habitQuery = await db.prepareAsync(`SELECT * FROM habits WHERE group_id = $groupId`);
-        const habits = await habitQuery.executeAsync({ $groupId: selectedGroup.id });
-        const habitRows = await habits.getAllAsync();
-        const habitList = habitRows.map(mapDBToHabit);
-
-
         // Return Group
         return { goalTasks, habitList };
 
@@ -371,6 +275,77 @@ export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => 
         await todoQuery.finalizeAsync();
     }
 }
+
+
+// Fetch Task detail helper
+export const fetchTaskDetails = async (db: SQLiteDatabase, tasks: any[], habitRows: any[]) => {
+    return await Promise.all(
+        tasks.map(async (row) => {
+            let group = null;
+            let habit = null;
+            let references = null;
+            let subtasks = null;
+
+            // Fetch group details if group_id is not null
+            if (row.group_id) {
+                const groupQuery = await db.prepareAsync(
+                    `SELECT title AS group_title, group_bgColor, group_textColor FROM groups WHERE id = $groupId;`
+                );
+                try {
+                    const groupRows = await groupQuery.executeAsync({ $groupId: row.group_id });
+                    group = await groupRows.getFirstAsync();
+                } finally {
+                    await groupQuery.finalizeAsync();
+                }
+            }
+
+            // Fetch habit details if habit_id is not null
+            if (row.habit_id) {
+                let tempHabit = habitRows.find((habit) => habit.id === row.habit_id);
+                habit = tempHabit ? { id: row.habit_id, title: tempHabit.title } : null;
+            }
+
+            // Fetch references
+            const refQuery = await db.prepareAsync(
+                `SELECT id, name, url FROM reference WHERE task_id = $todoId;`
+            );
+            try {
+                const refRows = await refQuery.executeAsync({ $todoId: row.id });
+                references = ((await refRows.getAllAsync()) as ReferenceProps[])
+                    .filter((ref) => ref.url && ref.url.trim() !== '')
+                    .map((ref) => ({
+                        id: ref.id,
+                        name: ref.name,
+                        url: ref.url,
+                    }));
+            } finally {
+                await refQuery.finalizeAsync();
+            }
+
+            // Fetch subtasks
+            const subtasksQuery = await db.prepareAsync(
+                `SELECT * FROM todos WHERE task_id = $taskId`
+            );
+            try {
+                let Rows = await subtasksQuery.executeAsync({ $taskId: row.id });
+                const subtasksRows = await Rows.getAllAsync()
+                subtasks = subtasksRows.map(mapDBToTodo);
+
+            } finally {
+                await subtasksQuery.finalizeAsync();
+
+                return {
+                    ...row,
+                    subtasks,
+                    group,
+                    habit,
+                    references,
+                };
+            }
+        }
+        ));
+}
+
 
 // Update Task
 export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Task) => {
