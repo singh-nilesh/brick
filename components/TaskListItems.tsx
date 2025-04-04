@@ -6,6 +6,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Task } from '../utils/customTypes';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { markAsDone, markAsNotDone } from '../utils/todoService';
+import { addTask } from '@/utils/taskService';
 
 
 interface TaskListItemsProps {
@@ -17,25 +18,35 @@ interface TaskListItemsProps {
 }
 
 const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListItemsProps) => {
-    //const [isEditing, setIsEditing] = useState(false);
-    //const [editedTask, setEditedTask] = useState<string>(item.task);
 
-    const handleIsDone = (id: number) => {
+    const handleIsDone = (item: Task) => {
+        console.log('Takslist item: 22 --> Task ID:', item.id);
+        
         setTasks((currentTasks) => {
             const updatedTasks = currentTasks.map((task) =>
-                task.id === id ? { ...task, status: !task.status } : task
+                (task.id === item.id  && task.habit?.id === item.habit?.id) ? { ...task, status: !task.status } : task
             );
 
             // Perform database operation
-            const taskToUpdate = updatedTasks.find((task) => task.id === id);
+            const taskToUpdate = updatedTasks.find((task) => task.id === item.id);
             if (taskToUpdate) {
-                (async () => {
-                    if (taskToUpdate.status) {
-                        await markAsDone(db, id);
-                    } else {
-                        await markAsNotDone(db, id);
-                    }
-                })();
+
+                // Insert if New Habit
+                if (taskToUpdate.id == 0 && taskToUpdate.habit?.id) {
+                    (async () => {
+                        await addTask(db, taskToUpdate)
+                    })();
+
+                // Update if Existing Task
+                } else {
+                    (async () => {
+                        if (taskToUpdate.status) {
+                            await markAsDone(db, item.id);
+                        } else {
+                            await markAsNotDone(db, item.id);
+                        }
+                    })();
+                }
             }
 
             return updatedTasks;
@@ -55,7 +66,7 @@ const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListIt
         >
             <View style={styles.container}>
                 {/* Checkbox */}
-                <Pressable style={{ padding: 5 }} onPress={() => handleIsDone(item.id)}>
+                <Pressable style={{ padding: 5 }} onPress={() => handleIsDone(item)}>
                     <Feather
                         name={item.status ? 'check-circle' : 'circle'}
                         size={24}

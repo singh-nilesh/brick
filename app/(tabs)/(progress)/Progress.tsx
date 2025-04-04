@@ -5,8 +5,8 @@ import { Group, Habit, Task } from '../../../utils/customTypes';
 import { getGroups, getFullGroup, updateTask } from '../../../utils/taskService';
 import { useSQLiteContext } from 'expo-sqlite';
 import EditTaskBottomSheet from '../../../components/EditTaskBottomSheet';
-import { useFocusEffect } from 'expo-router';
-import HabitSummary from '@/components/HabitSummary';
+import { router, useFocusEffect } from 'expo-router';
+
 
 const getCircleColor = (dueDate: Date, done: boolean) => {
   if ((isPast(dueDate) || isToday(dueDate)) && done === true) return '#77B254'; // Green
@@ -24,8 +24,7 @@ const Progress = () => {
   const db = useSQLiteContext();
   const [Groups, setGroups] = useState<Group[]>([]);
   const [Tasks, setTasks] = useState<Task[]>([]);
-  const [Habits, setHabits] = useState<Task[]>([]);
-  const [habitList, setHabitList] = useState<Habit[]>([]);
+  const [habitDetail, setHabitDetail] = useState<Habit[]>([]);
 
   const [showTaskBottomSheet, setShowTaskBottomSheet] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -33,6 +32,7 @@ const Progress = () => {
   const [refreshDB, setRefreshDB] = useState(false);
 
 
+  // fetch tasks form database
   const fetchGroups = async () => {
     const group_list = (await getGroups(db)) as Group[];
     setGroups(group_list);
@@ -41,17 +41,11 @@ const Progress = () => {
   const fetchTasks = async () => {
     if (activeGroup) {
       const group = await getFullGroup(db, activeGroup);
-  
-      // Goal tasks are those that DO NOT have a habit
-      setTasks(group.goalTasks.filter((task) => task.habit === null));
-  
-      // Habit tasks are those that HAVE a habit
-      setHabits(group.goalTasks.filter((task) => task.habit !== null));
-  
-      setHabitList(group.habitList);
+      setTasks(group.goalTasks);
+      setHabitDetail(group.habitList);
     }
   };
-  
+
 
   useFocusEffect(
     useCallback(() => {
@@ -77,6 +71,18 @@ const Progress = () => {
     await updateTask(db, oldTask, newTask);
     setRefreshDB(!refreshDB);
   }
+
+  // Handle Habit selection
+  const handleHabitSelection = (id : number) => {
+    console.log(' Progress 83 --> Selected Habit:', id);
+    router.push({
+      pathname: '/HabitSummary',
+      params: {
+        detail: JSON.stringify(habitDetail.filter((habit) => habit.id === id)),
+      },
+    });
+    
+  };
 
 
   return (
@@ -147,8 +153,18 @@ const Progress = () => {
           }
 
           ListFooterComponent={
-            <View style={{ marginVertical: 50, paddingBottom:60 }}>
-              <HabitSummary taskList={Tasks} habitList={habitList} />
+            <View style={{ marginVertical: 50, paddingBottom: 60 }}>
+
+              { // redirecting to habit Summary
+              habitDetail.map((habit, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.stepContainer, { height: 40 }]}
+                  onPress={() => handleHabitSelection(habit.id)}>
+
+                  <Text>{habit.title}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           } />
 
