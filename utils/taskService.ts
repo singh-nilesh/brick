@@ -78,10 +78,10 @@ export const addTask = async (db: SQLiteDatabase, newTask: Task) => {
 
     if (TaskId !== undefined) {
         // Add references and sub task
-    await insertReferences(db, TaskId, newTask.references);
-    newTask.subtasks ? await addSubTaskList(db, TaskId, newTask.subtasks) : null;
+        await insertReferences(db, TaskId, newTask.references);
+        newTask.subtasks ? await addSubTaskList(db, TaskId, newTask.subtasks) : null;
     }
-    
+
 }
 
 // Generate Task Dynamically
@@ -258,7 +258,7 @@ export const getTasksForDate = async (db: SQLiteDatabase, dueDate: Date) => {
 // tasks & habits ->  PROGRESS PAGE
 export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => {
     const todoQuery = await db.prepareAsync(
-        `SELECT * FROM tasks WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 AND habit_id IS null ORDER BY due_at`
+        `SELECT * FROM tasks WHERE group_id = $groupId AND is_task = 1 AND is_deleted = 0 ORDER BY due_at`
     );
 
     // Fetch habits
@@ -275,7 +275,7 @@ export const getFullGroup = async (db: SQLiteDatabase, selectedGroup: Group) => 
         const taskDetails = await fetchTaskDetails(db, todoRows, habitRows);
 
         const goalTasks = taskDetails.map(mapDBToTask);
-        
+
         // Return Group
         return { goalTasks, habitList };
 
@@ -361,7 +361,7 @@ export const fetchTaskDetails = async (db: SQLiteDatabase, tasks: any[], habitRo
 
 // Update Task
 export const updateTask = async (db: SQLiteDatabase, oldTask: Task, newTask: Task) => {
-    
+
     // compare old and new todo Entries
     if (oldTask.title !== newTask.title ||
         oldTask.status !== newTask.status ||
@@ -616,15 +616,20 @@ export const getBookmarks = async (db: SQLiteDatabase) => {
 
 
 // fetch Habits Tasks
-export const getHabitTask = async (db: SQLiteDatabase, id:number ) => {
+export const getHabitTask = async (db: SQLiteDatabase, id: number) => {
     const habitQuery = await db.prepareAsync(
-        `SELECT * FROM todo WHERE habit_id = $id`
+        `SELECT * FROM tasks WHERE habit_id = $id AND is_task = 1 AND is_deleted = 0`
     );
     try {
         const habitRows = await habitQuery.executeAsync({ $id: id });
         const habits = await habitRows.getAllAsync();
         return habits.map(mapDBToTask);
-    } finally {
+    }
+    catch (error) {
+        console.error("Error fetching tasks:", error);
+        throw error;
+    }
+    finally {
         await habitQuery.finalizeAsync();
     }
 }

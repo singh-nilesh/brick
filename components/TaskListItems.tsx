@@ -20,7 +20,6 @@ interface TaskListItemsProps {
 const TaskListItems = ({ db, item, setTasks, onDelete, onTaskPress }: TaskListItemsProps) => {
 
     const handleIsDone = (item: Task) => {
-        console.log('Takslist item: 22 --> Task ID:', item.id);
         
         setTasks((currentTasks) => {
             const updatedTasks = currentTasks.map((task) =>

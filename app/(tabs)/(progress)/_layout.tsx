@@ -7,12 +7,6 @@ export default function ProgressLayout() {
         name="Progress"
         options={{ title: "Progress", headerShown: false }}
       />
-
-      <Stack.Screen
-        name="HabitSummary"
-        options={{ title: "HabitSummary" }}
-      />
-
     </Stack>
   );
 }
