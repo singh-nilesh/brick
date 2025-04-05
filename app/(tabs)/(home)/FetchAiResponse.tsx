@@ -3,11 +3,11 @@ import { AntDesign } from '@expo/vector-icons';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
-import axios from 'axios';
-import { useAuth } from '@clerk/clerk-expo'; // Clerk auth hook
+
+
+const GEMINI_API_KEY = "AIzaSyCWgyJhItYBAe-82bM3gryBgwVt-4jkTDQ"
 
 const FetchAiResponse = () => {
-    const { getToken } = useAuth(); // Get Clerk Auth token
     const [goal, setGoal] = useState('');
     const [habitCount, setHabitsCount] = useState(2);
     const [tasksCount, setTasksCount] = useState(7);
@@ -21,38 +21,79 @@ const FetchAiResponse = () => {
         }
 
         setIsLoading(true);
-        try {
-            const token = await getToken(); // Get Clerk JWT Token
 
-            const response = await axios.post("https://brick-backend-production.up.railway.app/generate-plan",
+        const promptText = `
+        User's Goal: ${goal}.
+        Generate:
+        1. goal: mentioned above. ie. ${goal}.  
+        2. ${habitCount} habits that the user should follow weekly.
+        3. ${tasksCount} one-time tasks (milestones) to achieve the goal.
+        
+        Habits:
+        - Include a title and which days of the week it should be followed (0-6).
+        - Optionally include a reference link.
+        
+        Tasks:
+        - Include a title and the due date (as a day count from start).
+        - Optionally include a list of reference link.
+        
+        Return the output as a JSON object.
+        note: use double-quotes for string values, "".
+        template:
+        {
+          goal: "goal title",
+          habits: [
+            {
+              title: "habit title",
+              weekDates: [1, 3, 5],
+              referenceLink: "https://realpython.com",
+              },
+        ],
+            tasks: [
                 {
-                    goal,
-                    habitCount,
-                    tasksCount,
-                    extraContent
+                title: "task title",
+                dueDay_count_from_start: 1,
+                reference: [
+                { "id": 1, "name": "Real Python", "url": "https://realpython.com" },
+                { "id": 2, "name": "only Python", "url": "https://realpython.com" },
+                ],
                 },
-                {
-                    headers: { Authorization: `Bearer ${token}` } // Send Clerk token
-                }
-            );
+            ],
+            }  
+        `;
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                }),
+            });
+
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!text) throw new Error("No response text from Gemini API");
+
+            const json = JSON.parse(text.replace(/```json|```/g, "").trim());;
 
             router.push({
                 pathname: "/(tabs)/(home)/GroupOverview",
-                params: { data: JSON.stringify(response.data) },
+                params: { data: JSON.stringify(json) },
             });
 
         } catch (error) {
-            console.error("API Error:", error);
-            Alert.alert('Error', 'Failed to generate a plan. Please try again later.');
+            console.error("Gemini error:", error);
+            Alert.alert('Error', 'Something went wrong while generating the plan.');
         } finally {
             setIsLoading(false);
         }
     };
 
-
     return (
         <View style={styles.modal}>
-            {/* Back Button */}
             <AntDesign
                 name="leftcircleo"
                 size={30}
@@ -68,7 +109,6 @@ const FetchAiResponse = () => {
                     and let AI generate a structured plan for you!
                 </Text>
 
-                {/* Goal Input */}
                 <Text style={styles.label}>Your Goal</Text>
                 <TextInput
                     style={styles.input}
@@ -78,7 +118,6 @@ const FetchAiResponse = () => {
                     placeholderTextColor="#888"
                 />
 
-                {/* Habits Input */}
                 <Text style={styles.label}>Number of Weekly Habits</Text>
                 <TextInput
                     style={styles.input}
@@ -90,7 +129,6 @@ const FetchAiResponse = () => {
                     placeholderTextColor="#888"
                 />
 
-                {/* Tasks Input */}
                 <Text style={styles.label}>Number of One-time Tasks</Text>
                 <TextInput
                     style={styles.input}
@@ -102,7 +140,6 @@ const FetchAiResponse = () => {
                     placeholderTextColor="#888"
                 />
 
-                {/* Extra Content Input */}
                 <Text style={styles.label}> Extra Context about yourself</Text>
                 <TextInput
                     style={[styles.input, { height: 100 }]}
@@ -114,7 +151,6 @@ const FetchAiResponse = () => {
                     placeholderTextColor="#888"
                 />
 
-                {/* Generate Button */}
                 <TouchableOpacity
                     style={[styles.generateButton, isLoading && styles.disabledButton]}
                     onPress={fetchResponse}
@@ -186,7 +222,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     disabledButton: {
-        backgroundColor: '#555', // Darker grey when disabled
+        backgroundColor: '#555',
     },
     buttonText: {
         color: 'white',
