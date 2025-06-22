@@ -22,7 +22,7 @@ export default function TabLayout() {
   const [addHabitModalVisible, setAddHabitModalVisible] = useState(false);
   const [fetchGroups, setFetchGroups] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
-
+  
   // Get the current page path
   const pagePath = usePathname();
   //console.log(pagePath);

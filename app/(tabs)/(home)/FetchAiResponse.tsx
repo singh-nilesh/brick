@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
 
 
-const GEMINI_API_KEY = "AIzaSyCWgyJhItYBAe-82bM3gryBgwVt-4jkTDQ"
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY';
 
 const FetchAiResponse = () => {
     const [goal, setGoal] = useState('');
